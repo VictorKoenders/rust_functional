@@ -1,23 +1,17 @@
 #![cfg_attr(debug_assertions, allow(dead_code))]
 
-#[macro_use]
-extern crate serde_derive;
-extern crate regex;
-extern crate serde;
+extern crate rust_functional;
 extern crate serde_json;
-
-mod module;
 
 use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::Write;
 use std::process::Command;
 
-use module::{Builder, Config, Instruction, InstructionParameter};
+use rust_functional::{Builder, Config, Instruction, InstructionParameter};
 
 fn main() {
     let _ = remove_dir_all("output");
-    let mut file = File::open("modules/adder/module.json").unwrap();
-    let config: Config = serde_json::from_reader(&mut file).unwrap();
+    let config = Config::from_path("modules/adder");
 
     let mut builder = Builder::default();
     builder.add_module(&config);
@@ -31,7 +25,7 @@ fn main() {
         out_variable_name: "out".to_string(),
     });
 
-    builder.add_instruction(Instruction::Return(InstructionParameter::Variable(
+    builder.add_instruction(Instruction::Exit(InstructionParameter::Variable(
         "out".to_string(),
     )));
 
@@ -46,15 +40,19 @@ fn main() {
 }"#,
         files["src/main.rs"]
     );
+    let mut dir = std::env::current_dir().unwrap();
+    dir.push("modules");
+    dir.push("adder");
+    let dir = dir.to_str().unwrap().replace("\\", "/");
     assert_eq!(
-        r#"[package]
+        format!(r#"[package]
 name = "test"
 version = "0.1.0"
 authors = [""]
 
 [dependencies]
-adder = { path = "../modules/adder" }
-"#,
+adder = {{ path = "{}" }}
+"#, dir),
         files["Cargo.toml"]
     );
 

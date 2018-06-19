@@ -14,13 +14,31 @@ use serde::de::{MapAccess, Visitor};
 use serde::de::value::MapAccessDeserializer;
 use std::fmt;
 use std::marker::PhantomData;
+use std::fs::File;
+use std::path::PathBuf;
 
 #[derive(Debug, Default, Deserialize)]
 pub struct Config {
+    #[serde(skip)]
+    pub url: PathBuf,
+
     pub name: String,
     pub description: String,
 
     pub methods: Vec<Method>,
+}
+
+impl Config {
+    pub fn from_path(p: &str) -> Config {
+        let mut path = ::std::env::current_dir().unwrap();
+        path.push(p);
+        let mut json_file = path.clone();
+        json_file.push("module.json");
+        let mut file = File::open(&json_file).unwrap();
+        let mut config: Config = ::serde_json::from_reader(&mut file).unwrap();
+        config.url = path;
+        config
+    }
 }
 
 #[derive(Debug, Default, Deserialize)]

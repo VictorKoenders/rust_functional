@@ -12,8 +12,7 @@ impl<'a> Builder<'a> {
         if self
             .modules
             .iter()
-            .find(|m| ::std::ptr::eq(**m as *const Config, module as *const Config))
-            .is_some()
+            .any(|m| ::std::ptr::eq(*m as *const Config, module as *const Config))
         {
             return;
         }
@@ -24,7 +23,7 @@ impl<'a> Builder<'a> {
         self.instructions.push(instruction);
     }
 
-    pub fn build(self) -> HashMap<String, String> {
+    pub fn build(&self) -> HashMap<String, String> {
         let mut map = HashMap::new();
         map.insert("src/main.rs".to_string(), {
             let mut result = String::new();
@@ -36,7 +35,7 @@ impl<'a> Builder<'a> {
 
             result += "\n";
             result += "fn main() {\n";
-            for instruction in self.instructions {
+            for instruction in &self.instructions {
                 result += &instruction.build();
             }
             result += "}";
@@ -51,7 +50,7 @@ authors = [""]
 [dependencies]
 "#.to_string();
             for module in &self.modules {
-                result += &format!("{} = {{ path = \"../modules/{0}\" }}\n", module.name);
+                result += &format!("{} = {{ path = \"{}\" }}\n", module.name, module.url.to_str().unwrap().replace("\\", "/"));
             }
             result
         });
@@ -59,6 +58,7 @@ authors = [""]
     }
 }
 
+#[derive(Debug)]
 pub enum Instruction<'a> {
     CallModule {
         config: &'a Config,
@@ -67,10 +67,11 @@ pub enum Instruction<'a> {
         out_variable_name: String,
     },
     Return(InstructionParameter),
+    Exit(InstructionParameter),
 }
 
 impl<'a> Instruction<'a> {
-    pub fn build(self) -> String {
+    pub fn build(&self) -> String {
         match self {
             Instruction::CallModule {
                 config,
@@ -78,7 +79,7 @@ impl<'a> Instruction<'a> {
                 parameters,
                 out_variable_name
             } => {
-                let method = config.methods.iter().find(|m| m.name == method).unwrap();
+                let method = config.methods.iter().find(|m| &m.name == method).unwrap();
                 let mut args = Vec::with_capacity(method.input.len());
                 for arg in &method.input {
                     let value = parameters.iter().find(|p| p.0 == arg.name).unwrap();
@@ -86,13 +87,17 @@ impl<'a> Instruction<'a> {
                 }
                 format!("    let {} = {}::{}({});\n", out_variable_name.to_string(), config.name, method.name, args.join(", "))
             },
-            Instruction::Return(param) => {
+            Instruction::Exit(param) => {
                 format!("    std::process::exit({});\n", param.to_string())
+            }
+            Instruction::Return(param) => {
+                format!("    {}\n", param.to_string())
             }
         }
     }
 }
 
+#[derive(Debug)]
 pub enum InstructionParameter {
     Variable(String),
     String(String),
