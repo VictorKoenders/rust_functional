@@ -1,0 +1,29 @@
+{
+    "name": "test",
+    "description": "This is a test module",
+    "input": [
+        {
+            "name": "a",
+            "description": "A numeric value A",
+            "type": {
+                "type": "numeric",
+                "between": [1, 100]
+            }
+        },
+        {
+            "name": "b",
+            "description": "A numeric value B",
+            "type": {
+                "type": "numeric",
+                "between": [1, 100]
+            }
+        }
+    ],
+    "output": {
+        "name": "out",
+        "description": "A added to B",
+        "type": {
+            "type": "numeric"
+        }
+    }
+}

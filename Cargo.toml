@@ -1,0 +1,10 @@
+[package]
+name = "rust_functional"
+version = "0.1.0"
+authors = ["Trangar <victor.koenders@gmail.com>"]
+
+[dependencies]
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
+regex = "*"
