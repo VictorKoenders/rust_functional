@@ -20,11 +20,19 @@ pub struct Config {
     pub name: String,
     pub description: String,
 
+    pub methods: Vec<Method>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct Method {
+    pub name: String,
+    pub description: String,
+
     #[serde(deserialize_with = "array_or_single")]
     pub input: Vec<Input>,
 
     #[serde(deserialize_with = "array_or_single")]
-    pub output: Vec<Output>,
+    pub output: Vec<Output>
 }
 
 fn array_or_single<'de, T, D>(deserializer: D) -> Result<Vec<T>, D::Error>

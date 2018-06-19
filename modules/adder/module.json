@@ -1,0 +1,41 @@
+{
+    "name": "adder",
+    "description": "Module with several adding methods",
+    "methods": [
+        {
+            "name": "add",
+            "description": "Adds numbers A and B together",
+            "input": [
+                {
+                    "name": "a",
+                    "description": "Numeric value A",
+                    "type": {
+                        "type": "numeric",
+                        "between": [
+                            1,
+                            100
+                        ]
+                    }
+                },
+                {
+                    "name": "b",
+                    "description": "Numeric value B",
+                    "type": {
+                        "type": "numeric",
+                        "between": [
+                            1,
+                            100
+                        ]
+                    }
+                }
+            ],
+            "output": {
+                "name": "out",
+                "description": "A added to B",
+                "type": {
+                    "type": "numeric"
+                }
+            }
+        }
+    ]
+}
