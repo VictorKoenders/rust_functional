@@ -1,0 +1,9 @@
+[package]
+name = "module_def_generator"
+version = "0.1.0"
+authors = ["Trangar <victor.koenders@gmail.com>"]
+
+[dependencies]
+syn = { version = "*", features = ["parsing", "full", "extra-traits"] }
+proc-macro2 = "0.3.8"
+rust_functional = { path = "../base" }

@@ -4,7 +4,8 @@ members = [
     "modules/adder",
     "base",
     "web_api",
-    "libs/cookie-rs"
+    "libs/cookie-rs",
+    "module_def_generator",
 ]
 
 [replace]

@@ -6,4 +6,7 @@ extern crate serde_json;
 
 mod module;
 
-pub use module::{Builder, Config, Instruction, InstructionParameter};
+pub use module::{
+    Builder, Config, Input, Instruction, InstructionParameter, Method, NumericConstraint, Output,
+    ParameterType, StringConstraint,
+};
