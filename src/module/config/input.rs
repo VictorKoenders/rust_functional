@@ -4,6 +4,6 @@ use super::ParameterType;
 pub struct Input {
     pub name: String,
     pub description: String,
-    #[serde(rename = "type")]
+    #[serde(default, rename = "type")]
     pub value_type: ParameterType,
 }

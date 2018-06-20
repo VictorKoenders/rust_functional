@@ -9,6 +9,12 @@ pub enum ParameterType {
     String(StringConstraint),
 }
 
+impl Default for ParameterType {
+    fn default() -> Self {
+        ParameterType::Unknown
+    }
+}
+
 impl<'de> Deserialize<'de> for ParameterType {
     fn deserialize<D>(deserializer: D) -> Result<ParameterType, D::Error>
     where
