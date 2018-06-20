@@ -1,10 +1,12 @@
-[package]
-name = "rust_functional"
-version = "0.1.0"
-authors = ["Trangar <victor.koenders@gmail.com>"]
+[workspace]
+members = [
+    "modules/actix_web_helper",
+    "modules/adder",
+    "base",
+    "web_api",
+    "libs/cookie-rs"
+]
 
-[dependencies]
-serde = "*"
-serde_derive = "*"
-serde_json = "*"
-regex = "*"
+[replace]
+"cookie:0.10.1" = { path = "libs/cookie-rs" }
+

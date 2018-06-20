@@ -1,0 +1,7 @@
+[package]
+name = "actix_web_helper"
+version = "0.1.0"
+authors = ["Trangar <victor.koenders@gmail.com>"]
+
+[dependencies]
+actix-web = "*"

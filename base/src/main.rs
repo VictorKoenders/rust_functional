@@ -35,7 +35,7 @@ fn main() {
         r#"extern crate adder;
 
 fn main() {
-    let out = adder::add(5, 10);
+    let out = adder::add(&5, &10);
     std::process::exit(out);
 }"#,
         files["src/main.rs"]

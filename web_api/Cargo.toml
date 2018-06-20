@@ -1,0 +1,7 @@
+[package]
+name = "rust_functional_web_api"
+version = "0.1.0"
+authors = ["Trangar <victor.koenders@gmail.com>"]
+
+[dependencies]
+rust_functional = { path = "../base" }

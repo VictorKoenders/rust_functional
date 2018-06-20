@@ -1,0 +1,54 @@
+{
+    "name": "actix_web_helper",
+    "description": "Module with several helper methods for actix-web",
+    "methods": [
+        {
+            "name": "get_property",
+            "description": "Get a property from the request url",
+            "input": [
+                {
+                    "name": "req",
+                    "description": "The request"
+                },
+                {
+                    "name": "field",
+                    "description": "The field to get from the URL",
+                    "type": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "output": {
+                "name": "out",
+                "description": "The field from the URL, or an empty string",
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        {
+            "name": "format1",
+            "description": "Format a string with 1 argument",
+            "input": [
+                {
+                    "name": "format",
+                    "description": "The format, the first {} will be replaced with arg0",
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "arg0",
+                    "description": "The value to replace in the format"
+                }
+            ],
+            "output": {
+                "name": "out",
+                "description": "The field from the URL, or an empty string",
+                "type": {
+                    "type": "string"
+                }
+            }
+        }
+    ]
+}

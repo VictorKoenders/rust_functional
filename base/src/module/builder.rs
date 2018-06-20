@@ -50,7 +50,11 @@ authors = [""]
 [dependencies]
 "#.to_string();
             for module in &self.modules {
-                result += &format!("{} = {{ path = \"{}\" }}\n", module.name, module.url.to_str().unwrap().replace("\\", "/"));
+                result += &format!(
+                    "{} = {{ path = \"{}\" }}\n",
+                    module.name,
+                    module.url.to_str().unwrap().replace("\\", "/")
+                );
             }
             result
         });
@@ -77,22 +81,36 @@ impl<'a> Instruction<'a> {
                 config,
                 method,
                 parameters,
-                out_variable_name
+                out_variable_name,
             } => {
-                let method = config.methods.iter().find(|m| &m.name == method).unwrap();
+                let method = config
+                    .methods
+                    .iter()
+                    .find(|m| &m.name == method)
+                    .expect(&format!(
+                        "Could not find method {:?}, available: {:?}",
+                        method,
+                        config.methods.iter().map(|m| &m.name).collect::<Vec<_>>()
+                    ));
                 let mut args = Vec::with_capacity(method.input.len());
                 for arg in &method.input {
-                    let value = parameters.iter().find(|p| p.0 == arg.name).unwrap();
-                    args.push(value.1.to_string());
+                    let value = parameters.iter().find(|p| p.0 == arg.name).expect(&format!(
+                        "Could not find parameter {:?}, provided: {:?}",
+                        arg.name,
+                        parameters.iter().map(|p| &p.0).collect::<Vec<_>>()
+                    ));
+                    args.push(format!("&{}", value.1.to_string()));
                 }
-                format!("    let {} = {}::{}({});\n", out_variable_name.to_string(), config.name, method.name, args.join(", "))
-            },
-            Instruction::Exit(param) => {
-                format!("    std::process::exit({});\n", param.to_string())
+                format!(
+                    "    let {} = {}::{}({});\n",
+                    out_variable_name.to_string(),
+                    config.name,
+                    method.name,
+                    args.join(", ")
+                )
             }
-            Instruction::Return(param) => {
-                format!("    {}\n", param.to_string())
-            }
+            Instruction::Exit(param) => format!("    std::process::exit({});\n", param.to_string()),
+            Instruction::Return(param) => format!("    {}\n", param.to_string()),
         }
     }
 }
