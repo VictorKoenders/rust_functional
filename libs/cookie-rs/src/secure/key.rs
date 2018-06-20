@@ -1,5 +1,5 @@
+use secure::ring::digest::{Algorithm, SHA256};
 use secure::ring::hkdf::expand;
-use secure::ring::digest::{SHA256, Algorithm};
 use secure::ring::hmac::SigningKey;
 use secure::ring::rand::{SecureRandom, SystemRandom};
 
@@ -22,7 +22,7 @@ const KEYS_INFO: &'static str = "COOKIE;SIGNED:HMAC-SHA256;PRIVATE:AEAD-AES-256-
 #[derive(Clone)]
 pub struct Key {
     signing_key: [u8; SIGNED_KEY_LEN],
-    encryption_key: [u8; PRIVATE_KEY_LEN]
+    encryption_key: [u8; PRIVATE_KEY_LEN],
 }
 
 impl Key {
@@ -50,7 +50,10 @@ impl Key {
     /// ```
     pub fn from_master(key: &[u8]) -> Key {
         if key.len() < 32 {
-            panic!("bad master key length: expected at least 32 bytes, found {}", key.len());
+            panic!(
+                "bad master key length: expected at least 32 bytes, found {}",
+                key.len()
+            );
         }
 
         // Expand the user's key into two.
@@ -66,7 +69,7 @@ impl Key {
 
         Key {
             signing_key: signing_key,
-            encryption_key: encryption_key
+            encryption_key: encryption_key,
         }
     }
 
@@ -106,10 +109,13 @@ impl Key {
 
         let rng = SystemRandom::new();
         if rng.fill(&mut sign_key).is_err() || rng.fill(&mut enc_key).is_err() {
-            return None
+            return None;
         }
 
-        Some(Key { signing_key: sign_key, encryption_key: enc_key })
+        Some(Key {
+            signing_key: sign_key,
+            encryption_key: enc_key,
+        })
     }
 
     /// Returns the raw bytes of a key suitable for signing cookies.

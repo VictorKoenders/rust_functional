@@ -9,12 +9,12 @@ pub use self::output::Output;
 pub use self::parameter_type::ParameterType;
 use serde::de::SeqAccess;
 
-use serde::{Deserialize, Deserializer};
-use serde::de::{MapAccess, Visitor};
 use serde::de::value::MapAccessDeserializer;
+use serde::de::{MapAccess, Visitor};
+use serde::{Deserialize, Deserializer};
 use std::fmt;
-use std::marker::PhantomData;
 use std::fs::File;
+use std::marker::PhantomData;
 use std::path::PathBuf;
 
 #[derive(Debug, Default, Deserialize)]
@@ -50,7 +50,7 @@ pub struct Method {
     pub input: Vec<Input>,
 
     #[serde(deserialize_with = "array_or_single")]
-    pub output: Vec<Output>
+    pub output: Vec<Output>,
 }
 
 fn array_or_single<'de, T, D>(deserializer: D) -> Result<Vec<T>, D::Error>

@@ -1,5 +1,7 @@
-mod config;
 mod builder;
+mod config;
 
-pub use self::config::{Config, Method, Input, Output, ParameterType, NumericConstraint, StringConstraint};
 pub use self::builder::{Builder, Instruction, InstructionParameter};
+pub use self::config::{
+    Config, Input, Method, NumericConstraint, Output, ParameterType, StringConstraint,
+};

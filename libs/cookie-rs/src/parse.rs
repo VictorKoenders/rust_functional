@@ -1,18 +1,18 @@
 use std::borrow::Cow;
 use std::cmp;
-use std::error::Error;
-use std::str::Utf8Error;
-use std::fmt;
 use std::convert::From;
+use std::error::Error;
+use std::fmt;
+use std::str::Utf8Error;
 
 #[allow(unused_imports, deprecated)]
 use std::ascii::AsciiExt;
 
+use time::{self, Duration};
 #[cfg(feature = "percent-encode")]
 use url::percent_encoding::percent_decode;
-use time::{self, Duration};
 
-use ::{Cookie, SameSite, CookieStr};
+use {Cookie, CookieStr, SameSite};
 
 /// Enum corresponding to a parsing error.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -107,7 +107,7 @@ fn parse_inner<'c>(s: &str, decode: bool) -> Result<Cookie<'c>, ParseError> {
     // Determine the name = val.
     let (name, value) = match key_value.find('=') {
         Some(i) => (key_value[..i].trim(), key_value[(i + 1)..].trim()),
-        None => return Err(ParseError::MissingPair)
+        None => return Err(ParseError::MissingPair),
     };
 
     if name.is_empty() {
@@ -137,7 +137,7 @@ fn parse_inner<'c>(s: &str, decode: bool) -> Result<Cookie<'c>, ParseError> {
         path: None,
         secure: None,
         http_only: None,
-        same_site: None
+        same_site: None,
     };
 
     for attr in attributes {
@@ -215,7 +215,8 @@ fn parse_inner<'c>(s: &str, decode: bool) -> Result<Cookie<'c>, ParseError> {
 }
 
 pub fn parse_cookie<'c, S>(cow: S, decode: bool) -> Result<Cookie<'c>, ParseError>
-    where S: Into<Cow<'c, str>>
+where
+    S: Into<Cow<'c, str>>,
 {
     let s = cow.into();
     let mut cookie = parse_inner(&s, decode)?;
@@ -225,29 +226,29 @@ pub fn parse_cookie<'c, S>(cow: S, decode: bool) -> Result<Cookie<'c>, ParseErro
 
 #[cfg(test)]
 mod tests {
-    use ::{Cookie, SameSite};
-    use ::time::{strptime, Duration};
+    use time::{strptime, Duration};
+    use {Cookie, SameSite};
 
     macro_rules! assert_eq_parse {
-        ($string:expr, $expected:expr) => (
+        ($string:expr, $expected:expr) => {
             let cookie = match Cookie::parse($string) {
                 Ok(cookie) => cookie,
-                Err(e) => panic!("Failed to parse {:?}: {:?}", $string, e)
+                Err(e) => panic!("Failed to parse {:?}: {:?}", $string, e),
             };
 
             assert_eq!(cookie, $expected);
-        )
+        };
     }
 
     macro_rules! assert_ne_parse {
-        ($string:expr, $expected:expr) => (
+        ($string:expr, $expected:expr) => {
             let cookie = match Cookie::parse($string) {
                 Ok(cookie) => cookie,
-                Err(e) => panic!("Failed to parse {:?}: {:?}", $string, e)
+                Err(e) => panic!("Failed to parse {:?}: {:?}", $string, e),
             };
 
             assert_ne!(cookie, $expected);
-        )
+        };
     }
 
     #[test]
@@ -354,33 +355,54 @@ mod tests {
         assert_ne_parse!("foo=bar;HttpOnly; Secure; Max-Age=4;Path=/baz", unexpected);
 
         expected.set_domain("www.foo.com");
-        assert_eq_parse!(" foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
-            Domain=www.foo.com", expected);
+        assert_eq_parse!(
+            " foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
+             Domain=www.foo.com",
+            expected
+        );
 
         expected.set_domain("foo.com");
-        assert_eq_parse!(" foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
-            Domain=foo.com", expected);
-        assert_eq_parse!(" foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
-            Domain=FOO.COM", expected);
+        assert_eq_parse!(
+            " foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
+             Domain=foo.com",
+            expected
+        );
+        assert_eq_parse!(
+            " foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
+             Domain=FOO.COM",
+            expected
+        );
 
         unexpected.set_path("/foo");
         unexpected.set_domain("bar.com");
-        assert_ne_parse!(" foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
-            Domain=foo.com", unexpected);
-        assert_ne_parse!(" foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
-            Domain=FOO.COM", unexpected);
+        assert_ne_parse!(
+            " foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
+             Domain=foo.com",
+            unexpected
+        );
+        assert_ne_parse!(
+            " foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
+             Domain=FOO.COM",
+            unexpected
+        );
 
         let time_str = "Wed, 21 Oct 2015 07:28:00 GMT";
         let expires = strptime(time_str, "%a, %d %b %Y %H:%M:%S %Z").unwrap();
         expected.set_expires(expires);
-        assert_eq_parse!(" foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
-            Domain=foo.com; Expires=Wed, 21 Oct 2015 07:28:00 GMT", expected);
+        assert_eq_parse!(
+            " foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
+             Domain=foo.com; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+            expected
+        );
 
         unexpected.set_domain("foo.com");
         let bad_expires = strptime(time_str, "%a, %d %b %Y %H:%S:%M %Z").unwrap();
         expected.set_expires(bad_expires);
-        assert_ne_parse!(" foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
-            Domain=foo.com; Expires=Wed, 21 Oct 2015 07:28:00 GMT", unexpected);
+        assert_ne_parse!(
+            " foo=bar ;HttpOnly; Secure; Max-Age=4; Path=/foo; \
+             Domain=foo.com; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+            unexpected
+        );
     }
 
     #[test]
@@ -395,7 +417,7 @@ mod tests {
         let expected = Cookie::new("foo", "b/r");
         let cookie = match Cookie::parse_encoded("foo=b%2Fr") {
             Ok(cookie) => cookie,
-            Err(e) => panic!("Failed to parse: {:?}", e)
+            Err(e) => panic!("Failed to parse: {:?}", e),
         };
 
         assert_eq!(cookie, expected);

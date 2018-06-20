@@ -1,5 +1,5 @@
-use secure::ring::digest::{SHA256, Algorithm};
-use secure::ring::hmac::{SigningKey, sign, verify_with_own_key as verify};
+use secure::ring::digest::{Algorithm, SHA256};
+use secure::ring::hmac::{sign, verify_with_own_key as verify, SigningKey};
 use secure::{base64, Key};
 
 use {Cookie, CookieJar};
@@ -21,7 +21,7 @@ pub const KEY_LEN: usize = 32;
 /// This type is only available when the `secure` feature is enabled.
 pub struct SignedJar<'a> {
     parent: &'a mut CookieJar,
-    key: SigningKey
+    key: SigningKey,
 }
 
 impl<'a> SignedJar<'a> {
@@ -30,7 +30,10 @@ impl<'a> SignedJar<'a> {
     /// `CookieJar`.
     #[doc(hidden)]
     pub fn new(parent: &'a mut CookieJar, key: &Key) -> SignedJar<'a> {
-        SignedJar { parent: parent, key: SigningKey::new(HMAC_DIGEST, key.signing()) }
+        SignedJar {
+            parent: parent,
+            key: SigningKey::new(HMAC_DIGEST, key.signing()),
+        }
     }
 
     /// Given a signed value `str` where the signature is prepended to `value`,
@@ -164,7 +167,7 @@ impl<'a> SignedJar<'a> {
 
 #[cfg(test)]
 mod test {
-    use {CookieJar, Cookie, Key};
+    use {Cookie, CookieJar, Key};
 
     #[test]
     fn simple() {

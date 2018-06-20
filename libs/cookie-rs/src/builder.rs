@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
-use time::{Tm, Duration};
+use time::{Duration, Tm};
 
-use ::{Cookie, SameSite};
+use {Cookie, SameSite};
 
 /// Structure that follows the builder pattern for building `Cookie` structs.
 ///
@@ -52,10 +52,13 @@ impl CookieBuilder {
     /// assert_eq!(c.name_value(), ("foo", "bar"));
     /// ```
     pub fn new<N, V>(name: N, value: V) -> CookieBuilder
-        where N: Into<Cow<'static, str>>,
-              V: Into<Cow<'static, str>>
+    where
+        N: Into<Cow<'static, str>>,
+        V: Into<Cow<'static, str>>,
     {
-        CookieBuilder { cookie: Cookie::new(name, value) }
+        CookieBuilder {
+            cookie: Cookie::new(name, value),
+        }
     }
 
     /// Sets the `expires` field in the cookie being built.

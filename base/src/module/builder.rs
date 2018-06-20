@@ -87,18 +87,25 @@ impl<'a> Instruction<'a> {
                     .methods
                     .iter()
                     .find(|m| &m.name == method)
-                    .expect(&format!(
-                        "Could not find method {:?}, available: {:?}",
-                        method,
-                        config.methods.iter().map(|m| &m.name).collect::<Vec<_>>()
-                    ));
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "Could not find method {:?}, available: {:?}",
+                            method,
+                            config.methods.iter().map(|m| &m.name).collect::<Vec<_>>()
+                        )
+                    });
                 let mut args = Vec::with_capacity(method.input.len());
                 for arg in &method.input {
-                    let value = parameters.iter().find(|p| p.0 == arg.name).expect(&format!(
-                        "Could not find parameter {:?}, provided: {:?}",
-                        arg.name,
-                        parameters.iter().map(|p| &p.0).collect::<Vec<_>>()
-                    ));
+                    let value = parameters
+                        .iter()
+                        .find(|p| p.0 == arg.name)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Could not find parameter {:?}, provided: {:?}",
+                                arg.name,
+                                parameters.iter().map(|p| &p.0).collect::<Vec<_>>()
+                            )
+                        });
                     args.push(format!("&{}", value.1.to_string()));
                 }
                 format!(

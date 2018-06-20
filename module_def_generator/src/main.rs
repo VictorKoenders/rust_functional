@@ -116,7 +116,7 @@ fn get_type(arg: &syn::Type) -> ParameterType {
     }
 }
 
-fn get_docs(attr: &Vec<syn::Attribute>) -> String {
+fn get_docs(attr: &[syn::Attribute]) -> String {
     let mut doc = String::new();
     for attr in attr {
         if is_doc(&attr) {
@@ -124,8 +124,8 @@ fn get_docs(attr: &Vec<syn::Attribute>) -> String {
                 if let proc_macro2::TokenTree::Literal(lit) = token {
                     doc += format!("{}", lit)
                         .trim_left_matches("\" ")
-                        .trim_left_matches("\"")
-                        .trim_right_matches("\"");
+                        .trim_left_matches('"')
+                        .trim_right_matches('"');
                     doc += "\n";
                 }
             }
@@ -136,7 +136,7 @@ fn get_docs(attr: &Vec<syn::Attribute>) -> String {
 
 fn is_doc(attr: &syn::Attribute) -> bool {
     for segment in &attr.path.segments {
-        if segment.ident.to_string() == "doc" {
+        if segment.ident == "doc" {
             return true;
         }
     }

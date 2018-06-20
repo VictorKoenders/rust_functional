@@ -1,4 +1,4 @@
-use secure::ring::aead::{seal_in_place, open_in_place, Algorithm, AES_256_GCM};
+use secure::ring::aead::{open_in_place, seal_in_place, AES_256_GCM, Algorithm};
 use secure::ring::aead::{OpeningKey, SealingKey};
 use secure::ring::rand::{SecureRandom, SystemRandom};
 use secure::{base64, Key};
@@ -22,7 +22,7 @@ pub const KEY_LEN: usize = 32;
 /// This type is only available when the `secure` feature is enabled.
 pub struct PrivateJar<'a> {
     parent: &'a mut CookieJar,
-    key: [u8; KEY_LEN]
+    key: [u8; KEY_LEN],
 }
 
 impl<'a> PrivateJar<'a> {
@@ -33,7 +33,10 @@ impl<'a> PrivateJar<'a> {
     pub fn new(parent: &'a mut CookieJar, key: &Key) -> PrivateJar<'a> {
         let mut key_array = [0u8; KEY_LEN];
         key_array.copy_from_slice(key.encryption());
-        PrivateJar { parent: parent, key: key_array }
+        PrivateJar {
+            parent: parent,
+            key: key_array,
+        }
     }
 
     /// Given a sealed value `str` and a key name `name`, where the nonce is
@@ -154,7 +157,9 @@ impl<'a> PrivateJar<'a> {
 
             // Randomly generate the nonce, then copy the cookie value as input.
             let (nonce, in_out) = data.split_at_mut(NONCE_LEN);
-            SystemRandom::new().fill(nonce).expect("couldn't random fill nonce");
+            SystemRandom::new()
+                .fill(nonce)
+                .expect("couldn't random fill nonce");
             in_out[..cookie_val.len()].copy_from_slice(cookie_val);
 
             // Use cookie's name as associated data to prevent value swapping.
@@ -199,7 +204,7 @@ impl<'a> PrivateJar<'a> {
 
 #[cfg(test)]
 mod test {
-    use {CookieJar, Cookie, Key};
+    use {Cookie, CookieJar, Key};
 
     #[test]
     fn simple() {

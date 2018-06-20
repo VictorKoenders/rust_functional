@@ -1,5 +1,5 @@
-use rust_functional::{Config, Instruction as BaseInstruction};
 use instruction::Instruction;
+use rust_functional::{Config, Instruction as BaseInstruction};
 use std::collections::HashMap;
 
 #[derive(Debug, Default)]
@@ -37,7 +37,11 @@ authors = [""]
 actix-web = "*"
 "#.to_string();
             for module in &self.modules {
-                str += &format!("{} = {{ path = \"{}\" }}\n", module.name, module.url.to_str().unwrap().replace("\\", "/"));
+                str += &format!(
+                    "{} = {{ path = \"{}\" }}\n",
+                    module.name,
+                    module.url.to_str().unwrap().replace("\\", "/")
+                );
             }
             str += r#"
 [replace]
@@ -94,7 +98,8 @@ impl<'a> EndPoint<'a> {
     }
 
     pub fn add_base_instruction(&mut self, instruction: BaseInstruction<'a>) {
-        self.instructions.push(Instruction::BaseInstruction(instruction));
+        self.instructions
+            .push(Instruction::BaseInstruction(instruction));
     }
 
     pub fn add_instruction(&mut self, instruction: Instruction<'a>) {
@@ -102,12 +107,18 @@ impl<'a> EndPoint<'a> {
     }
 
     fn register_with_app(&self) -> String {
-        format!(".route({:?}, actix_web::http::Method::GET, {})", self.url, self.name)
+        format!(
+            ".route({:?}, actix_web::http::Method::GET, {})",
+            self.url, self.name
+        )
     }
 
     fn create_function(&self) -> String {
         let mut result = String::new();
-        result += &format!("\nfn {}(req: actix_web::HttpRequest) -> impl actix_web::Responder {{\n", self.name);
+        result += &format!(
+            "\nfn {}(req: actix_web::HttpRequest) -> impl actix_web::Responder {{\n",
+            self.name
+        );
         for instruction in &self.instructions {
             result += &instruction.build();
         }

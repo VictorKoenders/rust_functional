@@ -42,11 +42,14 @@ impl<'de> Visitor<'de> for ParameterTypeVisitor {
                 match map.next_value::<String>()?.to_lowercase().as_str() {
                     "number" | "numeric" => {
                         if let ParameterType::Unknown = parameter_type {
-                            parameter_type = ParameterType::Numeric(NumericConstraint::NoConstraint);
+                            parameter_type =
+                                ParameterType::Numeric(NumericConstraint::NoConstraint);
                         } else if let ParameterType::Numeric(_) = parameter_type {
                             // do nothing
                         } else {
-                            panic!("Could not set parameter type to numeric, conflicting information");
+                            panic!(
+                                "Could not set parameter type to numeric, conflicting information"
+                            );
                         }
                     }
                     "string" | "text" => {
@@ -55,7 +58,9 @@ impl<'de> Visitor<'de> for ParameterTypeVisitor {
                         } else if let ParameterType::String(_) = parameter_type {
                             // do nothing
                         } else {
-                            panic!("Could not set parameter type to string, conflicting information");
+                            panic!(
+                                "Could not set parameter type to string, conflicting information"
+                            );
                         }
                     }
                     x => {
@@ -65,7 +70,10 @@ impl<'de> Visitor<'de> for ParameterTypeVisitor {
                 }
             } else if key == "between" {
                 let value: Vec<i32> = map.next_value()?;
-                let value = NumericConstraint::IntegerRange { from: value[0], to: value[1] };
+                let value = NumericConstraint::IntegerRange {
+                    from: value[0],
+                    to: value[1],
+                };
                 if let ParameterType::Numeric(ref mut constraint) = parameter_type {
                     *constraint = value;
                 } else if let ParameterType::Unknown = parameter_type {

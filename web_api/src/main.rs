@@ -23,21 +23,33 @@ fn main() {
             method: "get_property".to_string(),
             out_variable_name: "name".to_string(),
             parameters: vec![
-                ("req".to_string(), InstructionParameter::Variable("req".to_string())),
-                ("field".to_string(), InstructionParameter::String("name".to_string())),
-            ]
+                (
+                    "req".to_string(),
+                    InstructionParameter::Variable("req".to_string()),
+                ),
+                (
+                    "field".to_string(),
+                    InstructionParameter::String("name".to_string()),
+                ),
+            ],
         });
         endpoint.add_base_instruction(BaseInstruction::CallModule {
             config: &actix_helper_module,
             method: "format1".to_string(),
             out_variable_name: "result".to_string(),
             parameters: vec![
-                ("format".to_string(), InstructionParameter::String("Hello {}".to_string())),
-                ("arg0".to_string(), InstructionParameter::Variable("name".to_string())),
-            ]
+                (
+                    "format".to_string(),
+                    InstructionParameter::String("Hello {}".to_string()),
+                ),
+                (
+                    "arg0".to_string(),
+                    InstructionParameter::Variable("name".to_string()),
+                ),
+            ],
         });
         endpoint.add_instruction(Instruction::Json(InstructionParameter::Variable(
-            "result".to_string()
+            "result".to_string(),
         )));
         endpoint
     });

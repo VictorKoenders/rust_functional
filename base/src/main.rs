@@ -45,14 +45,17 @@ fn main() {
     dir.push("adder");
     let dir = dir.to_str().unwrap().replace("\\", "/");
     assert_eq!(
-        format!(r#"[package]
+        format!(
+            r#"[package]
 name = "test"
 version = "0.1.0"
 authors = [""]
 
 [dependencies]
 adder = {{ path = "{}" }}
-"#, dir),
+"#,
+            dir
+        ),
         files["Cargo.toml"]
     );
 
