@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum NumericConstraint {
     NoConstraint,
     IntegerRange { from: i32, to: i32 },

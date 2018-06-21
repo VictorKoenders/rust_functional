@@ -1,0 +1,12 @@
+[package]
+name = "module_postgres"
+version = "0.1.0"
+authors = ["Trangar <victor.koenders@gmail.com>"]
+
+[dependencies]
+r2d2 = "*"
+r2d2_postgres = "*"
+postgres = { version = "*", features = ["with-serde_json", "with-uuid"] }
+serde_json = "*"
+uuid = "0.5.1"
+lazy_static = "*"

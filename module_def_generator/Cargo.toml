@@ -5,5 +5,5 @@ authors = ["Trangar <victor.koenders@gmail.com>"]
 
 [dependencies]
 syn = { version = "*", features = ["parsing", "full", "extra-traits"] }
-proc-macro2 = "0.3.8"
+proc-macro2 = "0.4.4"
 rust_functional = { path = "../base" }

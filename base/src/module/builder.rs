@@ -106,7 +106,7 @@ impl<'a> Instruction<'a> {
                                 parameters.iter().map(|p| &p.0).collect::<Vec<_>>()
                             )
                         });
-                    args.push(format!("&{}", value.1.to_string()));
+                    args.push(value.1.to_string(true));
                 }
                 format!(
                     "    let {} = {}::{}({});\n",
@@ -116,8 +116,8 @@ impl<'a> Instruction<'a> {
                     args.join(", ")
                 )
             }
-            Instruction::Exit(param) => format!("    std::process::exit({});\n", param.to_string()),
-            Instruction::Return(param) => format!("    {}\n", param.to_string()),
+            Instruction::Exit(param) => format!("    std::process::exit({});\n", param.to_string(true)),
+            Instruction::Return(param) => format!("    {}\n", param.to_string(false)),
         }
     }
 }
@@ -131,9 +131,9 @@ pub enum InstructionParameter {
 }
 
 impl InstructionParameter {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self, add_reference_sign: bool) -> String {
         match self {
-            InstructionParameter::Variable(name) => name.clone(),
+            InstructionParameter::Variable(name) => if add_reference_sign { format!("&{}", name) } else { name.clone() },
             InstructionParameter::String(value) => format!("{:?}", value),
             InstructionParameter::Number(value) => value.to_string(),
             InstructionParameter::Float(value) => value.to_string(),

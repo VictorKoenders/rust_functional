@@ -108,7 +108,7 @@ impl<'a> EndPoint<'a> {
 
     fn register_with_app(&self) -> String {
         format!(
-            ".route({:?}, actix_web::http::Method::GET, {})",
+            "            .route({:?}, actix_web::http::Method::GET, {})",
             self.url, self.name
         )
     }

@@ -2,8 +2,10 @@
 members = [
     "modules/actix_web_helper",
     "modules/adder",
+    "modules/postgres",
     "base",
     "web_api",
+    "output",
     "libs/cookie-rs",
     "module_def_generator",
 ]

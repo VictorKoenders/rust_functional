@@ -2,11 +2,13 @@ use super::{NumericConstraint, StringConstraint};
 use serde::{de::MapAccess, de::Visitor, Deserialize, Deserializer};
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ParameterType {
     Unknown,
     Numeric(NumericConstraint),
     String(StringConstraint),
+    Object(String),
+    Trait(Vec<String>),
 }
 
 impl Default for ParameterType {
@@ -63,6 +65,9 @@ impl<'de> Visitor<'de> for ParameterTypeVisitor {
                             );
                         }
                     }
+                    "object" => {
+                        parameter_type = ParameterType::Object(String::new(),)
+                    }
                     x => {
                         println!("Unexpected value {:?}", x);
                         panic!();
@@ -80,6 +85,15 @@ impl<'de> Visitor<'de> for ParameterTypeVisitor {
                     parameter_type = ParameterType::Numeric(value);
                 } else {
                     panic!("Could not set 'between' property on parameter type");
+                }
+            } else if key == "path" {
+                let value: String = map.next_value()?;
+                if let ParameterType::Object(ref mut o) = parameter_type {
+                    *o = value;
+                } else if let ParameterType::Trait(ref mut t) = parameter_type {
+                    t.push(value);
+                } else {
+                    panic!("Could not set 'path' property on parameter type");
                 }
             } else {
                 println!("Unexpected key {:?}", key);

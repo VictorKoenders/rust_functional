@@ -2,13 +2,16 @@ extern crate proc_macro2;
 extern crate rust_functional;
 extern crate syn;
 
-use rust_functional::{Config, Input, Method, NumericConstraint, Output, ParameterType};
+mod type_resolver;
+
+use rust_functional::{Config, Input, Method, Output};
 use std::fs::File;
 use std::io::{Read, Write};
+use type_resolver::TypeResolver;
 
 fn main() {
     let mut contents = Vec::new();
-    let mut file = File::open("modules/adder/src/lib.rs").unwrap();
+    let mut file = File::open("modules/postgres/src/lib.rs").unwrap();
     file.read_to_end(&mut contents).unwrap();
     let input: syn::File = syn::parse_file(std::str::from_utf8(&contents).unwrap()).unwrap();
 
@@ -23,6 +26,8 @@ fn main() {
         .unwrap()
         .write_all(format!("{:#?}", input).as_bytes())
         .unwrap();
+    
+    let mut resolver = TypeResolver::default();
 
     for item in &input.items {
         match item {
@@ -37,7 +42,7 @@ fn main() {
                     let mut output = Output {
                         name: "result".to_string(),
                         description: "".to_string(),
-                        value_type: get_type(ty),
+                        value_type: resolver.get_type(ty),
                     };
                     for line in method.description.lines() {
                         if line.starts_with("return:") {
@@ -51,7 +56,7 @@ fn main() {
                     let mut input = Input {
                         name: get_parameter_name(&input),
                         description: "".to_string(),
-                        value_type: get_parameter_type(&input),
+                        value_type: resolver.get_fn_arg_type(&input),
                     };
                     let mut line_iter = method.description.lines();
                     while let Some(line) = line_iter.next() {
@@ -72,6 +77,18 @@ fn main() {
                 }
                 module.methods.push(method);
             }
+            syn::Item::ExternCrate(c) => {
+                let name = c.ident.to_string();
+                let alias = c.rename.as_ref().map(|r| r.1.to_string());
+                resolver.register_module(name, alias);
+            }
+            syn::Item::Use(u) => {
+                // TODO: Add to resolver
+                println!("Resolver::add_use({:?})", u);
+            },
+            syn::Item::Macro(_) => {
+                // Ignore macros
+            }
             x => {
                 panic!("Unexpected item {:?}", x);
             }
@@ -91,41 +108,20 @@ fn get_parameter_name(arg: &syn::FnArg) -> String {
     }
 }
 
-fn get_parameter_type(arg: &syn::FnArg) -> ParameterType {
-    match arg {
-        syn::FnArg::Captured(cap) => get_type(&cap.ty),
-        x => panic!("Unknown fnarg type: {:?}", x),
-    }
-}
-
-fn get_type(arg: &syn::Type) -> ParameterType {
-    match arg {
-        syn::Type::Path(path) => {
-            for segment in &path.path.segments {
-                let ident = format!("{}", segment.ident);
-                if ident == "i32" {
-                    return ParameterType::Numeric(NumericConstraint::NoConstraint);
-                } else {
-                    panic!("Unknown type ident {:?}", ident);
-                }
-            }
-            panic!("{:?}", path);
-        }
-        syn::Type::Reference(r) => get_type(&*r.elem),
-        x => panic!("Unknown type {:?}", x),
-    }
-}
-
 fn get_docs(attr: &[syn::Attribute]) -> String {
     let mut doc = String::new();
     for attr in attr {
         if is_doc(&attr) {
             for token in attr.tts.clone() {
                 if let proc_macro2::TokenTree::Literal(lit) = token {
-                    doc += format!("{}", lit)
-                        .trim_left_matches("\" ")
-                        .trim_left_matches('"')
-                        .trim_right_matches('"');
+                    let mut lit: &str = &format!("{}", lit);
+                    if lit.starts_with("\" ") {
+                        lit = &lit[2..];
+                    } else if lit.starts_with('"') {
+                        lit = &lit[1..];
+                    }
+                    lit = lit.trim_right_matches('"');
+                    doc += lit;
                     doc += "\n";
                 }
             }

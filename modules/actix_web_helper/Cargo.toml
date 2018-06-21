@@ -5,3 +5,5 @@ authors = ["Trangar <victor.koenders@gmail.com>"]
 
 [dependencies]
 actix-web = "*"
+serde = "*"
+serde_json = "*"

@@ -1,0 +1,49 @@
+{
+    "name": "module_postgres",
+    "description": "Module with several helper methods for postgres actions",
+    "methods": [
+        {
+            "name": "get_connection",
+            "description": "Get a connection to the database",
+            "input": [
+            ],
+            "output": {
+                "name": "connection",
+                "description": "The connection to the database",
+                "type": {
+                    "type": "object",
+                    "path": "::r2d2::PooledConnection"
+                }
+            }
+        },
+        {
+            "name": "execute_query",
+            "description": "Execute a query on the database connection",
+            "input": [
+                {
+                    "name": "connection",
+                    "description": "Connection to the database",
+                    "type": {
+                        "type": "object",
+                        "path": "::r2d2::PooledConnection"
+                    }
+                },
+                {
+                    "name": "query",
+                    "description": "The query to execute",
+                    "type": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "output": {
+                "name": "result",
+                "description": "The result set of the query",
+                "type": {
+                    "type": "object",
+                    "path": "::Vec<::HashMap<String, ::serde_json::Value>>"
+                }
+            }
+        }
+    ]
+}

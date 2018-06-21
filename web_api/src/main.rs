@@ -11,40 +11,29 @@ use std::io::Write;
 use std::process::Command;
 
 fn main() {
-    let adder_module = Config::from_path("../rust_functional/modules/adder");
-    let actix_helper_module = Config::from_path("modules/actix_web_helper");
+    let postgres = Config::from_path("modules/postgres");
     let mut builder = Builder::default();
-    builder.add_module(&adder_module);
-    builder.add_module(&actix_helper_module);
+    builder.add_module(&postgres);
     builder.add_endpoint({
-        let mut endpoint = EndPoint::new("hello_world", "/hello/{name}");
+        let mut endpoint = EndPoint::new("user_list", "/api/users/list");
         endpoint.add_base_instruction(BaseInstruction::CallModule {
-            config: &actix_helper_module,
-            method: "get_property".to_string(),
-            out_variable_name: "name".to_string(),
-            parameters: vec![
-                (
-                    "req".to_string(),
-                    InstructionParameter::Variable("req".to_string()),
-                ),
-                (
-                    "field".to_string(),
-                    InstructionParameter::String("name".to_string()),
-                ),
-            ],
+            config: &postgres,
+            method: "get_connection".to_string(),
+            out_variable_name: "connection".to_string(),
+            parameters: vec![],
         });
         endpoint.add_base_instruction(BaseInstruction::CallModule {
-            config: &actix_helper_module,
-            method: "format1".to_string(),
+            config: &postgres,
+            method: "execute_query".to_string(),
             out_variable_name: "result".to_string(),
             parameters: vec![
                 (
-                    "format".to_string(),
-                    InstructionParameter::String("Hello {}".to_string()),
+                    "connection".to_string(),
+                    InstructionParameter::Variable("connection".to_string()),
                 ),
                 (
-                    "arg0".to_string(),
-                    InstructionParameter::Variable("name".to_string()),
+                    "query".to_string(),
+                    InstructionParameter::String("SELECT * FROM users".to_string()),
                 ),
             ],
         });

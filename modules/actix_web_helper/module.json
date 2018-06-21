@@ -25,30 +25,6 @@
                     "type": "string"
                 }
             }
-        },
-        {
-            "name": "format1",
-            "description": "Format a string with 1 argument",
-            "input": [
-                {
-                    "name": "format",
-                    "description": "The format, the first {} will be replaced with arg0",
-                    "type": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "name": "arg0",
-                    "description": "The value to replace in the format"
-                }
-            ],
-            "output": {
-                "name": "out",
-                "description": "The field from the URL, or an empty string",
-                "type": {
-                    "type": "string"
-                }
-            }
         }
     ]
 }
