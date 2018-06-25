@@ -1,6 +1,6 @@
 use super::ParameterType;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Input {
     pub name: String,
     pub description: String,

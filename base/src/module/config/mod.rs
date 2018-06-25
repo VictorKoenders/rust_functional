@@ -17,7 +17,7 @@ use std::fs::File;
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Config {
     #[serde(skip)]
     pub url: PathBuf,
@@ -41,7 +41,7 @@ impl Config {
     }
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Method {
     pub name: String,
     pub description: String,

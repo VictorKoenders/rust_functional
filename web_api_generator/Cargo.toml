@@ -1,5 +1,5 @@
 [package]
-name = "rust_functional_web_api"
+name = "web_api_generator"
 version = "0.1.0"
 authors = ["Trangar <victor.koenders@gmail.com>"]
 

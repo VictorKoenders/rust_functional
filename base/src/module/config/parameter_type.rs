@@ -2,7 +2,7 @@ use super::{NumericConstraint, StringConstraint};
 use serde::{de::MapAccess, de::Visitor, Deserialize, Deserializer};
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum ParameterType {
     Unknown,
     Numeric(NumericConstraint),

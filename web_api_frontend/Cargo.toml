@@ -1,0 +1,18 @@
+[package]
+name = "web_api_frontend"
+version = "0.1.0"
+authors = ["Trangar <victor.koenders@gmail.com>"]
+
+[dependencies]
+actix-web = "*"
+diesel = { version = "*", features = ["postgres", "uuid"]}
+dotenv = "*"
+r2d2 = "*"
+web_api_generator = { path = "../web_api_generator" }
+rust_functional = { path = "../base" }
+uuid = { version = "*", features = ["serde"] }
+itertools = "*"
+serde_derive = "*"
+serde = "*"
+serde_json = "*"
+enum_primitive = "*"
