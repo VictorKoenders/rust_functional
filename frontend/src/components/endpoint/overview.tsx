@@ -16,6 +16,7 @@ export class OverviewProps {
 
 export class OverviewState {
     endpoint: endpoints.Endpoint;
+    hasChanges: boolean;
 }
 
 export class Overview extends React.Component<OverviewProps, OverviewState> {
@@ -25,7 +26,8 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
     constructor(props: OverviewProps, context?: any) {
         super(props, context);
         this.state = {
-            endpoint: cloneDeep(props.endpoint)
+            endpoint: cloneDeep(props.endpoint),
+            hasChanges: false
         };
         this.drag_from = React.createRef();
         this.drag_to = React.createRef();
@@ -51,7 +53,7 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
         let endpoint = Object.assign({}, this.state.endpoint);
         endpoint.instructions.splice(index, 1);
 
-        this.setState({ endpoint });
+        this.setState({ endpoint, hasChanges: false });
 
         return false;
     }
@@ -64,22 +66,32 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
                     ? this.state.endpoint.instructions[index].CallMethod
                           .out_variable_name
                     : null;
-            let endpoint: any = Object.assign({}, state.endpoint);
+            let endpoint = Object.assign({}, state.endpoint);
             endpoint.instructions[index] = {};
             endpoint.instructions[index][key] = instruction;
             if (
                 old_output_name != null &&
                 old_output_name != instruction.out_variable_name
             ) {
-                console.log(
-                    "Ouput name changed from " +
-                        old_output_name +
-                        " to " +
-                        instruction.out_variable_name
-                );
+                let new_name = instruction.out_variable_name;
+                for(var i = index + 1; i < endpoint.instructions.length; i++){
+                    let instruction = endpoint.instructions[i];
+                    if(instruction.CallMethod){
+                        for(const input of instruction.CallMethod.arguments) {
+                            if(input.arg_type == "Parameter" && input.arg_type_value == old_output_name) {
+                                input.arg_type_value = new_name;
+                            }
+                        }
+                        if(instruction.CallMethod.out_variable_name == old_output_name) {
+                            break;
+                        }
+                    }
+                    console.log(instruction);
+                }
             }
             return {
-                endpoint
+                endpoint,
+                hasChanges: true
             };
         });
     }
@@ -91,7 +103,8 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
         let instruction = instruction_renderer.create();
         endpoint.instructions.splice(index, 0, instruction);
         this.setState({
-            endpoint
+            endpoint,
+            hasChanges: true
         });
     }
 
@@ -102,11 +115,27 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
             this.componentInserted.bind(this)
         );
     }
+    save() {
+        console.log(this.state.endpoint);
+    }
     render() {
         let stack = new Stack();
+        let button_class = "btn float-right";
+        if (this.state.hasChanges) button_class += " btn-primary";
+        else button_class += " btn-default";
         return (
             <div className="row">
                 <div className="col-md-8">
+                    <div className="row">
+                        <div className="col-md-12">
+                            <button
+                                className={button_class}
+                                onClick={this.save.bind(this)}
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
                     <ul ref={this.drag_to}>
                         {this.state.endpoint.instructions.map(
                             (i: endpoints.Instruction, index: number) => {
@@ -118,7 +147,10 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
                                         instruction={i[key]}
                                         configs={this.props.configs}
                                         stack={stack}
-                                        onDelete={this.deleteInstruction.bind(this, index)}
+                                        onDelete={this.deleteInstruction.bind(
+                                            this,
+                                            index
+                                        )}
                                         onChange={this.changeInstruction.bind(
                                             this,
                                             index,
@@ -252,16 +284,17 @@ class Dragger {
         return true;
     }
 
-
-
     clearDrag() {
-        let elem = this.hover != null && !this.drag_element != null ? {
-            index: Array.prototype.indexOf.call(
-                this.hover.parentNode.childNodes,
-                this.hover
-            ),
-            elem: this.original_drag_element,
-        } : null;
+        let elem =
+            this.hover != null && !this.drag_element != null
+                ? {
+                      index: Array.prototype.indexOf.call(
+                          this.hover.parentNode.childNodes,
+                          this.hover
+                      ),
+                      elem: this.original_drag_element
+                  }
+                : null;
         if (this.hover != null) {
             this.hover.parentNode.removeChild(this.hover);
             this.hover = null;
@@ -271,7 +304,7 @@ class Dragger {
             this.drag_element = null;
             this.original_drag_element = null;
         }
-        if(elem != null) {
+        if (elem != null) {
             this.callback(elem.elem, elem.index);
         }
     }

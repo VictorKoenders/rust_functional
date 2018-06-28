@@ -4321,7 +4321,8 @@ class Overview extends React.Component {
     constructor(props, context) {
         super(props, context);
         this.state = {
-            endpoint: cloneDeep(props.endpoint)
+            endpoint: cloneDeep(props.endpoint),
+            hasChanges: false
         };
         this.drag_from = React.createRef();
         this.drag_to = React.createRef();
@@ -4342,7 +4343,7 @@ class Overview extends React.Component {
         ev.stopPropagation();
         let endpoint = Object.assign({}, this.state.endpoint);
         endpoint.instructions.splice(index, 1);
-        this.setState({ endpoint });
+        this.setState({ endpoint, hasChanges: false });
         return false;
     }
     changeInstruction(index, key, instruction) {
@@ -4357,13 +4358,25 @@ class Overview extends React.Component {
             endpoint.instructions[index][key] = instruction;
             if (old_output_name != null &&
                 old_output_name != instruction.out_variable_name) {
-                console.log("Ouput name changed from " +
-                    old_output_name +
-                    " to " +
-                    instruction.out_variable_name);
+                let new_name = instruction.out_variable_name;
+                for (var i = index + 1; i < endpoint.instructions.length; i++) {
+                    let instruction = endpoint.instructions[i];
+                    if (instruction.CallMethod) {
+                        for (const input of instruction.CallMethod.arguments) {
+                            if (input.arg_type == "Parameter" && input.arg_type_value == old_output_name) {
+                                input.arg_type_value = new_name;
+                            }
+                        }
+                        if (instruction.CallMethod.out_variable_name == old_output_name) {
+                            break;
+                        }
+                    }
+                    console.log(instruction);
+                }
             }
             return {
-                endpoint
+                endpoint,
+                hasChanges: true
             };
         });
     }
@@ -4373,16 +4386,28 @@ class Overview extends React.Component {
         let instruction = instruction_renderer.create();
         endpoint.instructions.splice(index, 0, instruction);
         this.setState({
-            endpoint
+            endpoint,
+            hasChanges: true
         });
     }
     componentDidMount() {
         this.dragger = new Dragger(this.drag_from.current, this.drag_to.current, this.componentInserted.bind(this));
     }
+    save() {
+        console.log(this.state.endpoint);
+    }
     render() {
         let stack = new instruction_base_1.Stack();
+        let button_class = "btn float-right";
+        if (this.state.hasChanges)
+            button_class += " btn-primary";
+        else
+            button_class += " btn-default";
         return (React.createElement("div", { className: "row" },
             React.createElement("div", { className: "col-md-8" },
+                React.createElement("div", { className: "row" },
+                    React.createElement("div", { className: "col-md-12" },
+                        React.createElement("button", { className: button_class, onClick: this.save.bind(this) }, "Save"))),
                 React.createElement("ul", { ref: this.drag_to }, this.state.endpoint.instructions.map((i, index) => {
                     let key = Object.getOwnPropertyNames(i)[0];
                     const Renderer = instruction_renderers[key];
@@ -4476,10 +4501,12 @@ class Dragger {
         return true;
     }
     clearDrag() {
-        let elem = this.hover != null && !this.drag_element != null ? {
-            index: Array.prototype.indexOf.call(this.hover.parentNode.childNodes, this.hover),
-            elem: this.original_drag_element,
-        } : null;
+        let elem = this.hover != null && !this.drag_element != null
+            ? {
+                index: Array.prototype.indexOf.call(this.hover.parentNode.childNodes, this.hover),
+                elem: this.original_drag_element
+            }
+            : null;
         if (this.hover != null) {
             this.hover.parentNode.removeChild(this.hover);
             this.hover = null;
