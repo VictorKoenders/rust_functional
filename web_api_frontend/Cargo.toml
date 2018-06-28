@@ -5,11 +5,12 @@ authors = ["Trangar <victor.koenders@gmail.com>"]
 
 [dependencies]
 actix-web = "*"
-diesel = { version = "*", features = ["postgres", "uuid"]}
+diesel = { version = "*", features = ["postgres", "uuid", "r2d2"]}
 dotenv = "*"
 r2d2 = "*"
 web_api_generator = { path = "../web_api_generator" }
 rust_functional = { path = "../base" }
+module_postgres = { path = "../modules/postgres" }
 uuid = { version = "*", features = ["serde"] }
 itertools = "*"
 serde_derive = "*"

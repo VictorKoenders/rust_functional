@@ -4,56 +4,83 @@ extern crate actix_web;
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;
+extern crate itertools;
 extern crate r2d2;
+extern crate rust_functional;
 extern crate uuid;
 extern crate web_api_generator;
-extern crate rust_functional;
-extern crate itertools;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 #[cfg(test)]
 extern crate test;
-#[macro_use] extern crate enum_primitive;
+#[macro_use]
+extern crate enum_primitive;
 
+pub mod endpoint;
 pub mod models;
 pub mod schema;
-pub mod endpoint;
 
 use diesel::pg::PgConnection;
-use diesel::prelude::*;
-use diesel::BelongingToDsl;
-use dotenv::dotenv;
+use diesel::r2d2::ConnectionManager;
+use r2d2::{Error, Pool};
 use std::env;
+use actix_web::{HttpRequest, Responder, App, server, Result, Json};
+use actix_web::fs::{NamedFile, StaticFiles};
+
+pub struct AppState {
+    pub db: DbConnection,
+}
+
+pub struct StateProvider {
+    db: DbConnection,
+}
+
+impl StateProvider {
+    pub fn new() -> Result<StateProvider, Error> {
+        let db = establish_connection()?;
+        Ok(StateProvider { db })
+    }
+
+    pub fn create_state(&self) -> AppState {
+        AppState {
+            db: self.db.clone(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct DbConnection {
+    pub(crate) conn: Pool<ConnectionManager<PgConnection>>,
+}
+
+pub fn establish_connection() -> Result<DbConnection, Error> {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    Ok(DbConnection {
+        conn: Pool::new(ConnectionManager::new(database_url))?,
+    })
+}
+
+fn index(_: HttpRequest<AppState>) -> Result<NamedFile> {
+    Ok(NamedFile::open("frontend/index.html")?)
+}
+
+fn get_endpoints(req: HttpRequest<AppState>) -> impl Responder {
+    let endpoint = endpoint::Endpoints::load(&req.state().db.conn.get().unwrap()).unwrap();
+    Json(endpoint)
+}
 
 fn main() {
-    dotenv().ok();
-    let database_url = "postgres://postgres:postgres@localhost/rust_functional"; //env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let connection = PgConnection::establish(&database_url)
-        .expect(&format!("Error connecting to {}", database_url));
-    let endpoint = endpoint::Endpoints::load(&connection).unwrap();
-    println!("{}", serde_json::to_string_pretty(&endpoint).unwrap());
-}
-/*
-
-    let endpoints: Vec<models::Endpoint> = schema::endpoint::table
-        .get_results(&connection)
-        .unwrap();
-    let instructions =
-        models::Instruction::belonging_to(&endpoints)
-        .get_results::<models::Instruction>(&connection)
-        .unwrap()
-        .grouped_by(&endpoints);
-    
-    let endpoints = endpoints.into_iter().zip(instructions.into_iter()).collect::<Vec<_>>();
-
-    println!("{:?}", endpoints);
-    /*
-    actix_web::server::new(|| actix_web::App::new())
-        .bind("127.0.0.1:8000")
+    dotenv::dotenv().expect("Could not load .env file");
+    let state_provider = StateProvider::new().unwrap();
+    server::new(move || {
+        App::with_state(state_provider.create_state())
+            .resource("/", |r| r.get().f(index))
+            .handler("/dist", StaticFiles::new("frontend/dist"))
+            .handler("/node_modules", StaticFiles::new("frontend/node_modules"))
+            .resource("/api/endpoints", |r| r.get().f(get_endpoints))
+    }).bind("127.0.0.1:8000")
         .unwrap()
         .run();
-    */
 }
-*/
