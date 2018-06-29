@@ -100,6 +100,9 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
                             break;
                         }
                     }
+                    if(instruction.JsonReturn && instruction.JsonReturn.arg_type == "Parameter" && instruction.JsonReturn.arg_type_value == old_output_name) {
+                        instruction.JsonReturn.arg_type_value = new_name;
+                    }
                 }
             }
             return {

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Stack, guid } from "./instruction_base";
-import { ArgEditor, getTypeName } from "./arg_editor";
+import { ArgEditor, getTypeName, argToString } from "./arg_editor";
 
 interface CallMethodProps {
     instruction: endpoints.CallMethod;
@@ -10,7 +10,9 @@ interface CallMethodProps {
     onChange: (m: endpoints.CallMethod) => void;
 }
 
-interface CallMethodState {}
+interface CallMethodState {
+    collapsed: boolean;
+}
 
 export class CallMethod extends React.Component<
     CallMethodProps,
@@ -30,10 +32,19 @@ export class CallMethod extends React.Component<
             }
         };
     }
+    constructor(props: CallMethodProps, context?: any) {
+        super(props, context);
+        this.state = {
+            collapsed: true
+        };
+    }
     setConfig(ev: React.ChangeEvent<HTMLSelectElement>) {
         let instruction = Object.assign({}, this.props.instruction);
         instruction.config = ev.target.value;
         this.props.onChange(instruction);
+        this.setState({
+            collapsed: false,
+        })
     }
     setMethod(ev: React.ChangeEvent<HTMLSelectElement>) {
         let instruction = Object.assign({}, this.props.instruction);
@@ -60,11 +71,11 @@ export class CallMethod extends React.Component<
                         arg_type_value: suggested.length ? suggested[0] : ""
                     });
                 }
-                if(method.output.length) {
+                if (method.output.length) {
                     let name = method.output[0].name;
-                    if(this.props.stack.variables[name]) {
-                        for(let n = 0; ; n++){
-                            if(!this.props.stack.variables[name + n]) {
+                    if (this.props.stack.variables[name]) {
+                        for (let n = 0; ; n++) {
+                            if (!this.props.stack.variables[name + n]) {
                                 name += n.toString();
                                 break;
                             }
@@ -135,6 +146,11 @@ export class CallMethod extends React.Component<
             </tr>
         );
     }
+    toggleCollapse(){
+        this.setState({
+            collapsed: !this.state.collapsed,
+        })
+    }
     render() {
         let config = this.props.configs.find(
             c => c.id == this.props.instruction.config
@@ -179,13 +195,44 @@ export class CallMethod extends React.Component<
                 </li>
             );
         }
-        let stack = this.props.stack.clone();
-        let output = null;
         if (method.output.length > 0) {
             this.props.stack.set_variable(
                 this.props.instruction.out_variable_name,
                 method.output[0].type
             );
+        }
+        if (this.state.collapsed) {
+            return (
+                <li
+                    style={{
+                        padding: "5px",
+                        minHeight: "40px",
+                    }}
+                >
+                    <button className="btn btn-success float-right" onClick={this.toggleCollapse.bind(this)}>
+                        Edit
+                    </button>
+                    <code>
+                        {method.output.length > 0 ? (
+                            <>
+                                let{" "}
+                                <b>
+                                    {this.props.instruction.out_variable_name}
+                                </b>{" "}
+                                ={" "}
+                            </>
+                        ) : null}
+                        <b>{config.name}</b>::<b>{method.name}</b>(
+                        {this.props.instruction.arguments.map(a => (
+                            <p key={a.name} style={{marginBottom: 0, marginLeft: "1rem"}}>{argToString(a)}, </p>
+                        ))}
+                        );<br />
+                    </code>
+                </li>
+            );
+        }
+        let output = null;
+        if (method.output.length > 0) {
             output = (
                 <>
                     returning <b>{method.output[0].name}</b> ({getTypeName(
@@ -201,13 +248,17 @@ export class CallMethod extends React.Component<
         }
         return (
             <li>
-                <a
-                    href="#"
-                    className="float-right btn btn-danger"
-                    onClick={this.props.onDelete}
-                >
-                    &times;
-                </a>
+                <div className="float-right">
+                    <button className="btn btn-success" onClick={this.toggleCollapse.bind(this)}>
+                        Collapse
+                    </button>
+                    <button
+                        className="btn btn-danger"
+                        onClick={this.props.onDelete}
+                    >
+                        &times;
+                    </button>
+                </div>
                 {config_select}
                 {method_select}
                 <table>

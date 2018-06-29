@@ -4089,6 +4089,15 @@ function getTypeName(type) {
     return "Unknown type";
 }
 exports.getTypeName = getTypeName;
+function argToString(type) {
+    switch (type.arg_type) {
+        case "String":
+            return '"' + type.arg_type_value + '"';
+        case "Parameter":
+            return type.arg_type_value;
+    }
+}
+exports.argToString = argToString;
 
 
 /***/ }),
@@ -4121,10 +4130,19 @@ class CallMethod extends React.Component {
             }
         };
     }
+    constructor(props, context) {
+        super(props, context);
+        this.state = {
+            collapsed: true
+        };
+    }
     setConfig(ev) {
         let instruction = Object.assign({}, this.props.instruction);
         instruction.config = ev.target.value;
         this.props.onChange(instruction);
+        this.setState({
+            collapsed: false,
+        });
     }
     setMethod(ev) {
         let instruction = Object.assign({}, this.props.instruction);
@@ -4201,6 +4219,11 @@ class CallMethod extends React.Component {
             React.createElement("td", null,
                 React.createElement(arg_editor_1.ArgEditor, { prop: prop, stack: this.props.stack, expected: arg.type, propChanged: this.propChanged.bind(this, arg) }))));
     }
+    toggleCollapse() {
+        this.setState({
+            collapsed: !this.state.collapsed,
+        });
+    }
     render() {
         let config = this.props.configs.find(c => c.id == this.props.instruction.config);
         let config_select = (React.createElement("select", { onChange: this.setConfig.bind(this), value: this.props.instruction.config },
@@ -4218,10 +4241,35 @@ class CallMethod extends React.Component {
                 config_select,
                 method_select));
         }
-        let stack = this.props.stack.clone();
-        let output = null;
         if (method.output.length > 0) {
             this.props.stack.set_variable(this.props.instruction.out_variable_name, method.output[0].type);
+        }
+        if (this.state.collapsed) {
+            return (React.createElement("li", { style: {
+                    padding: "5px",
+                    minHeight: "40px",
+                } },
+                React.createElement("button", { className: "btn btn-success float-right", onClick: this.toggleCollapse.bind(this) }, "Edit"),
+                React.createElement("code", null,
+                    method.output.length > 0 ? (React.createElement(React.Fragment, null,
+                        "let",
+                        " ",
+                        React.createElement("b", null, this.props.instruction.out_variable_name),
+                        " ",
+                        "=",
+                        " ")) : null,
+                    React.createElement("b", null, config.name),
+                    "::",
+                    React.createElement("b", null, method.name),
+                    "(",
+                    this.props.instruction.arguments.map(a => (React.createElement("p", { key: a.name, style: { marginBottom: 0, marginLeft: "1rem" } },
+                        arg_editor_1.argToString(a),
+                        ", "))),
+                    ");",
+                    React.createElement("br", null))));
+        }
+        let output = null;
+        if (method.output.length > 0) {
             output = (React.createElement(React.Fragment, null,
                 "returning ",
                 React.createElement("b", null, method.output[0].name),
@@ -4232,7 +4280,9 @@ class CallMethod extends React.Component {
                 React.createElement("input", { type: "text", value: this.props.instruction.out_variable_name, onChange: this.setOutVariableName.bind(this) })));
         }
         return (React.createElement("li", null,
-            React.createElement("a", { href: "#", className: "float-right btn btn-danger", onClick: this.props.onDelete }, "\u00D7"),
+            React.createElement("div", { className: "float-right" },
+                React.createElement("button", { className: "btn btn-success", onClick: this.toggleCollapse.bind(this) }, "Collapse"),
+                React.createElement("button", { className: "btn btn-danger", onClick: this.props.onDelete }, "\u00D7")),
             config_select,
             method_select,
             React.createElement("table", null,
@@ -4317,12 +4367,35 @@ class JsonReturn extends React.Component {
             JsonReturn: Object.assign({ id: instruction_base_1.guid() }, arg_editor_1.ArgEditor.new_arg())
         };
     }
+    constructor(props, context) {
+        super(props, context);
+        this.state = {
+            collapsed: true
+        };
+    }
     propChanged(prop) {
         this.props.onChange(Object.assign({ id: this.props.instruction.id }, prop));
     }
+    toggleCollapse() {
+        this.setState({
+            collapsed: !this.state.collapsed,
+        });
+    }
     render() {
+        if (this.state.collapsed) {
+            return (React.createElement("li", { style: {
+                    padding: "5px",
+                    minHeight: "40px"
+                } },
+                React.createElement("button", { className: "btn btn-success float-right", onClick: this.toggleCollapse.bind(this) }, "Edit"),
+                React.createElement("code", null,
+                    "return Json(",
+                    arg_editor_1.argToString(this.props.instruction),
+                    ");")));
+        }
         return (React.createElement("li", null,
-            React.createElement("a", { href: "#", className: "float-right btn btn-danger", onClick: this.props.onDelete }, "\u00D7"),
+            React.createElement("button", { className: "btn btn-success float-right", onClick: this.toggleCollapse.bind(this) }, "Collapse"),
+            React.createElement("button", { className: "float-right btn btn-danger", onClick: this.props.onDelete }, "\u00D7"),
             React.createElement("p", null, "Returning json of:"),
             React.createElement(arg_editor_1.ArgEditor, { prop: this.props.instruction, stack: this.props.stack, propChanged: this.propChanged.bind(this) })));
     }
@@ -4416,6 +4489,9 @@ class Overview extends React.Component {
                             old_output_name) {
                             break;
                         }
+                    }
+                    if (instruction.JsonReturn && instruction.JsonReturn.arg_type == "Parameter" && instruction.JsonReturn.arg_type_value == old_output_name) {
+                        instruction.JsonReturn.arg_type_value = new_name;
                     }
                 }
             }

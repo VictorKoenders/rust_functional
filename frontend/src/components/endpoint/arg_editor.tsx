@@ -159,3 +159,15 @@ export function getTypeName(type: endpoints.Type) {
     }
     return "Unknown type";
 }
+
+export function argToString(type: {
+    arg_type: string;
+    arg_type_value: string;
+}) {
+    switch (type.arg_type) {
+        case "String":
+            return '"' + type.arg_type_value + '"';
+        case "Parameter":
+            return type.arg_type_value;
+    }
+}
