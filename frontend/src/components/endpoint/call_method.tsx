@@ -60,6 +60,20 @@ export class CallMethod extends React.Component<
                         arg_type_value: suggested.length ? suggested[0] : ""
                     });
                 }
+                if(method.output.length) {
+                    let name = method.output[0].name;
+                    if(this.props.stack.variables[name]) {
+                        for(let n = 0; ; n++){
+                            if(!this.props.stack.variables[name + n]) {
+                                name += n.toString();
+                                break;
+                            }
+                        }
+                    }
+                    instruction.out_variable_name = name;
+                } else {
+                    instruction.out_variable_name = "";
+                }
             }
         }
 
