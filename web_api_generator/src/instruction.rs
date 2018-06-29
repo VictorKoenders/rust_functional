@@ -1,16 +1,18 @@
 use rust_functional::{Instruction as BaseInstruction, InstructionParameter};
 
 #[derive(Debug)]
-pub enum Instruction<'a> {
-    BaseInstruction(BaseInstruction<'a>),
+pub enum Instruction {
+    BaseInstruction(BaseInstruction),
     Json(InstructionParameter),
 }
 
-impl<'a> Instruction<'a> {
+impl Instruction {
     pub fn build(&self) -> String {
         match self {
             Instruction::BaseInstruction(bi) => bi.build(),
-            Instruction::Json(param) => format!("    actix_web::Json({})\n", param.to_string(false)),
+            Instruction::Json(param) => {
+                format!("    actix_web::Json({})\n", param.to_string(false))
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { InstructionBase, Stack } from "./instruction_base";
+import { Stack, guid } from "./instruction_base";
 import { ArgEditor } from "./arg_editor";
 
 interface JsonReturnProps {
@@ -21,16 +21,24 @@ export class JsonReturn extends React.Component<
     }
     static create(): endpoints.Instruction {
         return {
-            JsonReturn: ArgEditor.new_arg(),
-        }
+            JsonReturn: Object.assign({ id: guid() }, ArgEditor.new_arg())
+        };
     }
     propChanged(prop: { arg_type: string; arg_type_value: string }) {
-        this.props.onChange(prop);
+        this.props.onChange(
+            Object.assign({ id: this.props.instruction.id }, prop)
+        );
     }
     render() {
         return (
             <li>
-                <a href="#" className="float-right btn btn-danger" onClick={this.props.onDelete}>&times;</a>
+                <a
+                    href="#"
+                    className="float-right btn btn-danger"
+                    onClick={this.props.onDelete}
+                >
+                    &times;
+                </a>
                 <p>Returning json of:</p>
                 <ArgEditor
                     prop={this.props.instruction}

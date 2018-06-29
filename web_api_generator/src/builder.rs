@@ -1,26 +1,27 @@
 use instruction::Instruction;
 use rust_functional::{Config, Instruction as BaseInstruction};
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[derive(Debug, Default)]
-pub struct Builder<'a> {
-    modules: Vec<&'a Config>,
-    endpoints: Vec<EndPoint<'a>>,
+pub struct Builder {
+    modules: Vec<Rc<Config>>,
+    endpoints: Vec<EndPoint>,
 }
 
-impl<'a> Builder<'a> {
-    pub fn add_module(&mut self, module: &'a Config) {
+impl Builder {
+    pub fn add_module(&mut self, module: Rc<Config>) {
         if self
             .modules
             .iter()
-            .any(|m| ::std::ptr::eq(*m as *const Config, module as *const Config))
+            .any(|m| Rc::ptr_eq(m, &module))
         {
             return;
         }
         self.modules.push(module);
     }
 
-    pub fn add_endpoint(&mut self, endpoint: EndPoint<'a>) {
+    pub fn add_endpoint(&mut self, endpoint: EndPoint) {
         self.endpoints.push(endpoint);
     }
 
@@ -82,14 +83,14 @@ fn main() {
 }
 
 #[derive(Debug, Default)]
-pub struct EndPoint<'a> {
-    name: String,
-    url: String,
-    instructions: Vec<Instruction<'a>>,
+pub struct EndPoint {
+    pub name: String,
+    pub url: String,
+    pub instructions: Vec<Instruction>,
 }
 
-impl<'a> EndPoint<'a> {
-    pub fn new(name: impl Into<String>, url: impl Into<String>) -> EndPoint<'a> {
+impl EndPoint {
+    pub fn new(name: impl Into<String>, url: impl Into<String>) -> EndPoint {
         EndPoint {
             name: name.into(),
             url: url.into(),
@@ -97,12 +98,12 @@ impl<'a> EndPoint<'a> {
         }
     }
 
-    pub fn add_base_instruction(&mut self, instruction: BaseInstruction<'a>) {
+    pub fn add_base_instruction(&mut self, instruction: BaseInstruction) {
         self.instructions
             .push(Instruction::BaseInstruction(instruction));
     }
 
-    pub fn add_instruction(&mut self, instruction: Instruction<'a>) {
+    pub fn add_instruction(&mut self, instruction: Instruction) {
         self.instructions.push(instruction);
     }
 

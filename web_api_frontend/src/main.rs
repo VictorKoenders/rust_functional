@@ -11,6 +11,7 @@ extern crate uuid;
 extern crate web_api_generator;
 #[macro_use]
 extern crate serde_derive;
+extern crate failure;
 extern crate serde;
 extern crate serde_json;
 #[cfg(test)]
@@ -22,12 +23,12 @@ pub mod endpoint;
 pub mod models;
 pub mod schema;
 
+use actix_web::fs::{NamedFile, StaticFiles};
+use actix_web::{server, App, HttpRequest, Json, Result};
 use diesel::pg::PgConnection;
 use diesel::r2d2::ConnectionManager;
 use r2d2::{Error, Pool};
 use std::env;
-use actix_web::{HttpRequest, Responder, App, server, Result, Json};
-use actix_web::fs::{NamedFile, StaticFiles};
 
 pub struct AppState {
     pub db: DbConnection,
@@ -62,13 +63,52 @@ pub fn establish_connection() -> Result<DbConnection, Error> {
     })
 }
 
+fn generate(req: HttpRequest<AppState>) -> Result<String, failure::Error> {
+    let conn = req.state().db.conn.get()?;
+    let id = match req.match_info().get("id").map(uuid::Uuid::parse_str) {
+        Some(Ok(id)) => id,
+        _ => return Ok(String::new()),
+    };
+    let endpoint = match endpoint::Endpoint::load_one(&conn, id)? {
+        Some(e) => e,
+        None => return Ok(String::new()),
+    };
+    let output = endpoint.generate(&conn)?;
+    let mut result = String::new();
+    for (key, value) in output {
+        result += &format!("== {}\n{}\n\n", key, value);
+    }
+    Ok(result)
+}
+
 fn index(_: HttpRequest<AppState>) -> Result<NamedFile> {
     Ok(NamedFile::open("frontend/index.html")?)
 }
 
-fn get_endpoints(req: HttpRequest<AppState>) -> impl Responder {
-    let endpoint = endpoint::Endpoints::load(&req.state().db.conn.get().unwrap()).unwrap();
-    Json(endpoint)
+fn get_endpoints(req: HttpRequest<AppState>) -> Result<Json<endpoint::Endpoints>, failure::Error> {
+    let endpoint = endpoint::Endpoints::load(&*(req.state().db.conn.get()?))?;
+    Ok(Json(endpoint))
+}
+
+fn set_endpoints(
+    (req, form): (HttpRequest<AppState>, Json<endpoint::Endpoint>),
+) -> Result<Json<endpoint::Endpoint>, failure::Error> {
+    let mut endpoint = form.into_inner();
+    let conn = match req.state().db.conn.get() {
+        Ok(c) => c,
+        Err(e) => {
+            println!("{:?}", e);
+            return Err(e.into());
+        }
+    };
+    match endpoint.insert_or_update(&*conn) {
+        Ok(()) => {},
+        Err(e) => {
+            println!("{:?}", e);
+            return Err(e.into());
+        }
+    }
+    Ok(Json(endpoint))
 }
 
 fn main() {
@@ -79,7 +119,11 @@ fn main() {
             .resource("/", |r| r.get().f(index))
             .handler("/dist", StaticFiles::new("frontend/dist"))
             .handler("/node_modules", StaticFiles::new("frontend/node_modules"))
-            .resource("/api/endpoints", |r| r.get().f(get_endpoints))
+            .resource("/api/endpoints", |r| {
+                r.get().f(get_endpoints);
+                r.post().with(set_endpoints);
+            })
+            .resource("/api/generate/{id}", |r| r.get().f(generate))
     }).bind("127.0.0.1:8000")
         .unwrap()
         .run();

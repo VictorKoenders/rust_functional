@@ -26,7 +26,7 @@ fn main() {
         .unwrap()
         .write_all(format!("{:#?}", input).as_bytes())
         .unwrap();
-    
+
     let mut resolver = TypeResolver::default();
 
     for item in &input.items {
@@ -85,7 +85,7 @@ fn main() {
             syn::Item::Use(u) => {
                 // TODO: Add to resolver
                 println!("Resolver::add_use({:?})", u);
-            },
+            }
             syn::Item::Macro(_) => {
                 // Ignore macros
             }

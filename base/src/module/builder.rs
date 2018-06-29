@@ -1,25 +1,26 @@
 use super::config::Config;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[derive(Default)]
-pub struct Builder<'a> {
-    modules: Vec<&'a Config>,
-    instructions: Vec<Instruction<'a>>,
+pub struct Builder {
+    modules: Vec<Rc<Config>>,
+    instructions: Vec<Instruction>,
 }
 
-impl<'a> Builder<'a> {
-    pub fn add_module(&mut self, module: &'a Config) {
+impl Builder {
+    pub fn add_module(&mut self, module: Rc<Config>) {
         if self
             .modules
             .iter()
-            .any(|m| ::std::ptr::eq(*m as *const Config, module as *const Config))
+            .any(|m| Rc::ptr_eq(m, &module))
         {
             return;
         }
         self.modules.push(module);
     }
 
-    pub fn add_instruction(&mut self, instruction: Instruction<'a>) {
+    pub fn add_instruction(&mut self, instruction: Instruction) {
         self.instructions.push(instruction);
     }
 
@@ -63,9 +64,9 @@ authors = [""]
 }
 
 #[derive(Debug)]
-pub enum Instruction<'a> {
+pub enum Instruction {
     CallModule {
-        config: &'a Config,
+        config: Rc<Config>,
         method: String,
         parameters: Vec<(String, InstructionParameter)>,
         out_variable_name: String,
@@ -74,7 +75,7 @@ pub enum Instruction<'a> {
     Exit(InstructionParameter),
 }
 
-impl<'a> Instruction<'a> {
+impl Instruction {
     pub fn build(&self) -> String {
         match self {
             Instruction::CallModule {
@@ -116,7 +117,9 @@ impl<'a> Instruction<'a> {
                     args.join(", ")
                 )
             }
-            Instruction::Exit(param) => format!("    std::process::exit({});\n", param.to_string(true)),
+            Instruction::Exit(param) => {
+                format!("    std::process::exit({});\n", param.to_string(true))
+            }
             Instruction::Return(param) => format!("    {}\n", param.to_string(false)),
         }
     }
@@ -133,7 +136,11 @@ pub enum InstructionParameter {
 impl InstructionParameter {
     pub fn to_string(&self, add_reference_sign: bool) -> String {
         match self {
-            InstructionParameter::Variable(name) => if add_reference_sign { format!("&{}", name) } else { name.clone() },
+            InstructionParameter::Variable(name) => if add_reference_sign {
+                format!("&{}", name)
+            } else {
+                name.clone()
+            },
             InstructionParameter::String(value) => format!("{:?}", value),
             InstructionParameter::Number(value) => value.to_string(),
             InstructionParameter::Float(value) => value.to_string(),

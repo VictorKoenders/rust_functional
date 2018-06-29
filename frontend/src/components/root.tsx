@@ -7,6 +7,7 @@ interface RootState {
     endpoints: endpoints.Endpoint[];
     configs: endpoints.Config[];
     active: endpoints.Endpoint | null;
+    activeIndex: number,
 }
 
 export class Root extends React.Component<RootProps, RootState> {
@@ -15,7 +16,8 @@ export class Root extends React.Component<RootProps, RootState> {
         this.state = {
             endpoints: [],
             configs: [],
-            active: null
+            active: null,
+            activeIndex: 0,
         };
 
         fetch("/api/endpoints")
@@ -31,7 +33,8 @@ export class Root extends React.Component<RootProps, RootState> {
                 this.setState({
                     endpoints: r.endpoints,
                     configs: r.configs,
-                    active
+                    active,
+                    activeIndex: 1,
                 });
             });
     }
@@ -54,12 +57,41 @@ export class Root extends React.Component<RootProps, RootState> {
         );
     }
 
+    endpointChanged(endpoint: endpoints.Endpoint) {
+        let index = this.state.endpoints.findIndex(e => e.id == endpoint.id);
+        let endpoints = Object.assign([], this.state.endpoints);
+        endpoints[index] = endpoint;
+        this.setState({
+            endpoints
+        });
+
+        fetch("/api/endpoints", {
+            body: JSON.stringify(endpoint),
+            headers: {
+                "content-type": "application/json"
+            },
+            method: "POST"
+        })
+            .then(r => r.json())
+            .then(r => {
+                let index = this.state.endpoints.findIndex(e => e.id == r.id);
+                let endpoints = Object.assign([], this.state.endpoints);
+                endpoints[index] = r;
+                this.setState({
+                    endpoints,
+                    active: r,
+                    activeIndex: this.state.activeIndex + 1,
+                });
+            });
+    }
+
     selectEndpoint(
         endpoint: endpoints.Endpoint,
         e: React.MouseEvent<HTMLAnchorElement>
     ) {
         this.setState({
-            active: endpoint
+            active: endpoint,
+            activeIndex: this.state.activeIndex + 1,
         });
         e.currentTarget.blur();
     }
@@ -74,6 +106,8 @@ export class Root extends React.Component<RootProps, RootState> {
                     <Overview
                         endpoint={this.state.active}
                         configs={this.state.configs}
+                        changeIndex={this.state.activeIndex}
+                        endpointChanged={this.endpointChanged.bind(this)}
                     />
                 ) : null}
             </div>

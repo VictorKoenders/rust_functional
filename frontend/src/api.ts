@@ -45,6 +45,7 @@ declare namespace endpoints {
     export type AnyInstruction = CallMethod | JsonReturn;
 
     export interface CallMethod {
+        id: string;
         config: string;
         method: string;
         out_variable_name: string;
@@ -52,6 +53,7 @@ declare namespace endpoints {
     }
 
     export interface JsonReturn {
+        id: string;
         arg_type: string;
         arg_type_value: string;
     }

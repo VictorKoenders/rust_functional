@@ -65,9 +65,7 @@ impl<'de> Visitor<'de> for ParameterTypeVisitor {
                             );
                         }
                     }
-                    "object" => {
-                        parameter_type = ParameterType::Object(String::new(),)
-                    }
+                    "object" => parameter_type = ParameterType::Object(String::new()),
                     x => {
                         println!("Unexpected value {:?}", x);
                         panic!();

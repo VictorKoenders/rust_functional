@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Stack } from "./instruction_base";
+import { Stack, guid } from "./instruction_base";
 import { ArgEditor, getTypeName } from "./arg_editor";
 
 interface CallMethodProps {
@@ -22,10 +22,11 @@ export class CallMethod extends React.Component<
     static create(): endpoints.Instruction {
         return {
             CallMethod: {
+                id: guid(),
                 config: "",
                 method: "",
                 out_variable_name: "",
-                arguments: [] as endpoints.Argument[],
+                arguments: [] as endpoints.Argument[]
             }
         };
     }
@@ -39,16 +40,24 @@ export class CallMethod extends React.Component<
         instruction.method = ev.target.value;
         instruction.arguments = [];
         let config = this.props.configs.find(c => c.id == instruction.config);
-        if(config) {
-            let method = config.config.methods.find(m => m.name == instruction.method);
-            if(method) {
-                for(const input of method.input) {
-                    let suggested = ArgEditor.getSuggested(input.type, this.props.stack);
+        if (config) {
+            let method = config.config.methods.find(
+                m => m.name == instruction.method
+            );
+            if (method) {
+                for (const input of method.input) {
+                    let suggested = ArgEditor.getSuggested(
+                        input.type,
+                        this.props.stack
+                    );
                     instruction.arguments.push({
                         name: input.name,
-                        arg_type: input.type.Object ?  "Parameter" : 
-                            input.type.String ?  "String" : "",
-                        arg_type_value: suggested.length ? suggested[0] : "",
+                        arg_type: input.type.Object
+                            ? "Parameter"
+                            : input.type.String
+                                ? "String"
+                                : "",
+                        arg_type_value: suggested.length ? suggested[0] : ""
                     });
                 }
             }
@@ -121,7 +130,7 @@ export class CallMethod extends React.Component<
                 onChange={this.setConfig.bind(this)}
                 value={this.props.instruction.config}
             >
-                <option value=""></option>
+                <option value="" />
                 {this.props.configs.map(c => (
                     <option value={c.id} key={c.id}>
                         {c.name}
@@ -140,7 +149,7 @@ export class CallMethod extends React.Component<
                 onChange={this.setMethod.bind(this)}
                 value={this.props.instruction.method}
             >
-                <option value=""></option>
+                <option value="" />
                 {config.config.methods.map(m => (
                     <option value={m.name} key={m.name}>
                         {m.name}
@@ -165,8 +174,9 @@ export class CallMethod extends React.Component<
             );
             output = (
                 <>
-                    returning <b>{method.output[0].name}</b> ({getTypeName(method.output[0].type)}) as:
-                    {' '}
+                    returning <b>{method.output[0].name}</b> ({getTypeName(
+                        method.output[0].type
+                    )}) as:{" "}
                     <input
                         type="text"
                         value={this.props.instruction.out_variable_name}
@@ -177,7 +187,13 @@ export class CallMethod extends React.Component<
         }
         return (
             <li>
-                <a href="#" className="float-right btn btn-danger" onClick={this.props.onDelete}>&times;</a>
+                <a
+                    href="#"
+                    className="float-right btn btn-danger"
+                    onClick={this.props.onDelete}
+                >
+                    &times;
+                </a>
                 {config_select}
                 {method_select}
                 <table>

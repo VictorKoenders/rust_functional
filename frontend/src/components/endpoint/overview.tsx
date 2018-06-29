@@ -11,12 +11,16 @@ const instruction_renderers: { [key: string]: InstructionBase } = {
 
 export class OverviewProps {
     endpoint: endpoints.Endpoint;
+    endpointChanged: (e: endpoints.Endpoint) => void;
     configs: endpoints.Config[];
+    changeIndex: number;
 }
 
 export class OverviewState {
     endpoint: endpoints.Endpoint;
+    changeIndex: number;
     hasChanges: boolean;
+    output: string | null;
 }
 
 export class Overview extends React.Component<OverviewProps, OverviewState> {
@@ -27,7 +31,9 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
         super(props, context);
         this.state = {
             endpoint: cloneDeep(props.endpoint),
-            hasChanges: false
+            hasChanges: false,
+            changeIndex: props.changeIndex,
+            output: null
         };
         this.drag_from = React.createRef();
         this.drag_to = React.createRef();
@@ -37,9 +43,11 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
         props: OverviewProps,
         oldState: OverviewState
     ) {
-        if (props.endpoint.id != oldState.endpoint.id) {
+        if (props.changeIndex != oldState.changeIndex) {
             return {
-                endpoint: cloneDeep(props.endpoint)
+                endpoint: cloneDeep(props.endpoint),
+                changeIndex: props.changeIndex,
+                hasChanges: false,
             };
         } else {
             return null;
@@ -53,7 +61,7 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
         let endpoint = Object.assign({}, this.state.endpoint);
         endpoint.instructions.splice(index, 1);
 
-        this.setState({ endpoint, hasChanges: false });
+        this.setState({ endpoint, hasChanges: true });
 
         return false;
     }
@@ -74,19 +82,24 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
                 old_output_name != instruction.out_variable_name
             ) {
                 let new_name = instruction.out_variable_name;
-                for(var i = index + 1; i < endpoint.instructions.length; i++){
+                for (var i = index + 1; i < endpoint.instructions.length; i++) {
                     let instruction = endpoint.instructions[i];
-                    if(instruction.CallMethod){
-                        for(const input of instruction.CallMethod.arguments) {
-                            if(input.arg_type == "Parameter" && input.arg_type_value == old_output_name) {
+                    if (instruction.CallMethod) {
+                        for (const input of instruction.CallMethod.arguments) {
+                            if (
+                                input.arg_type == "Parameter" &&
+                                input.arg_type_value == old_output_name
+                            ) {
                                 input.arg_type_value = new_name;
                             }
                         }
-                        if(instruction.CallMethod.out_variable_name == old_output_name) {
+                        if (
+                            instruction.CallMethod.out_variable_name ==
+                            old_output_name
+                        ) {
                             break;
                         }
                     }
-                    console.log(instruction);
                 }
             }
             return {
@@ -116,23 +129,52 @@ export class Overview extends React.Component<OverviewProps, OverviewState> {
         );
     }
     save() {
-        console.log(this.state.endpoint);
+        this.props.endpointChanged(this.state.endpoint);
+    }
+    clearOutput() {
+        this.setState({
+            output: null
+        });
+    }
+    generate() {
+        fetch("/api/generate/" + this.state.endpoint.id)
+            .then(o => o.text())
+            .then(t => {
+                this.setState({
+                    output: t
+                });
+            });
     }
     render() {
         let stack = new Stack();
-        let button_class = "btn float-right";
-        if (this.state.hasChanges) button_class += " btn-primary";
-        else button_class += " btn-default";
+        if (this.state.output !== null) {
+            return (
+                <>
+                    <button
+                        className="btn float-right btn-primary"
+                        onClick={this.clearOutput.bind(this)}
+                    >
+                        &times;
+                    </button>
+                    <pre>
+                        <code>{this.state.output}</code>
+                    </pre>
+                </>
+            );
+        }
         return (
             <div className="row">
                 <div className="col-md-8">
                     <div className="row">
                         <div className="col-md-12">
                             <button
-                                className={button_class}
-                                onClick={this.save.bind(this)}
+                                className="btn float-right btn-primary"
+                                onClick={(this.state.hasChanges
+                                    ? this.save
+                                    : this.generate
+                                ).bind(this)}
                             >
-                                Save
+                                {this.state.hasChanges ? "Save" : "Generate"}
                             </button>
                         </div>
                     </div>

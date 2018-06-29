@@ -33,8 +33,11 @@ export class ArgEditor extends React.Component<ArgEditorProps, ArgEditorState> {
         prop.arg_type = e.target.value;
         if (prop.arg_type == "Suggested") {
             prop.arg_type = "Parameter";
-            let suggested = ArgEditor.getSuggested(this.props.expected, this.props.stack);
-            if(suggested.length) {
+            let suggested = ArgEditor.getSuggested(
+                this.props.expected,
+                this.props.stack
+            );
+            if (suggested.length) {
                 prop.arg_type_value = suggested[0];
             }
         }
@@ -80,7 +83,7 @@ export class ArgEditor extends React.Component<ArgEditorProps, ArgEditorState> {
                     <input
                         type="text"
                         value={this.props.prop.arg_type_value}
-                        onChange={this.setValue}
+                        onChange={this.setValue.bind(this)}
                     />
                 );
             default:
@@ -89,14 +92,16 @@ export class ArgEditor extends React.Component<ArgEditorProps, ArgEditorState> {
                 );
         }
     }
-    static getSuggested(expected: endpoints.Type | null, stack: Stack): string[] {
+    static getSuggested(
+        expected: endpoints.Type | null,
+        stack: Stack
+    ): string[] {
         if (!expected || !expected.Object) return [];
         let suggested = [];
         for (const v in stack.variables) {
             if (
                 !stack.variables[v].String &&
-                stack.variables[v].Object ==
-                    expected.Object
+                stack.variables[v].Object == expected.Object
             ) {
                 suggested.push(v);
             }
@@ -123,7 +128,10 @@ export class ArgEditor extends React.Component<ArgEditorProps, ArgEditorState> {
                 </>
             );
         }
-        let suggested = ArgEditor.getSuggested(this.props.expected, this.props.stack);
+        let suggested = ArgEditor.getSuggested(
+            this.props.expected,
+            this.props.stack
+        );
         let type = this.getArgType(suggested);
         return (
             <>

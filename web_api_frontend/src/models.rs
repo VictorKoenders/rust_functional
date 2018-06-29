@@ -13,7 +13,7 @@ pub struct Config {
     pub path: String,
 }
 
-#[derive(Identifiable, Queryable, Debug)]
+#[derive(Identifiable, Queryable, Debug, Insertable, AsChangeset)]
 #[table_name = "endpoint"]
 pub struct Endpoint {
     pub id: Uuid,
@@ -22,7 +22,7 @@ pub struct Endpoint {
     pub url: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, Debug)]
+#[derive(Identifiable, Queryable, Associations, Debug, Insertable, AsChangeset)]
 #[table_name = "instruction"]
 #[belongs_to(Endpoint, foreign_key = "endpoint")]
 pub struct Instruction {
@@ -32,7 +32,7 @@ pub struct Instruction {
     pub sequence: i32,
 }
 
-#[derive(Identifiable, Queryable, Associations, Debug)]
+#[derive(Identifiable, Queryable, Associations, Debug, Insertable, AsChangeset)]
 #[table_name = "instruction_call_module"]
 #[belongs_to(Instruction, foreign_key = "instruction_id")]
 #[primary_key(instruction_id)]
@@ -43,7 +43,7 @@ pub struct CallModule {
     pub out_variable_name: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, Debug)]
+#[derive(Identifiable, Queryable, Associations, Debug, Insertable, AsChangeset)]
 #[table_name = "instruction_call_module_parameter"]
 #[belongs_to(CallModule, foreign_key = "instruction_call_module_id")]
 #[primary_key(instruction_call_module_id, sequence)]
@@ -55,7 +55,7 @@ pub struct CallModuleParameter {
     pub arg_type_value: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, Debug)]
+#[derive(Identifiable, Queryable, Associations, Debug, Insertable, AsChangeset)]
 #[table_name = "instruction_json_return"]
 #[belongs_to(Instruction, foreign_key = "instruction_id")]
 #[primary_key(instruction_id)]

@@ -4032,7 +4032,7 @@ class ArgEditor extends React.Component {
                         " ",
                         getTypeName(this.props.stack.variables[v]))))));
             case "String":
-                return (React.createElement("input", { type: "text", value: this.props.prop.arg_type_value, onChange: this.setValue }));
+                return (React.createElement("input", { type: "text", value: this.props.prop.arg_type_value, onChange: this.setValue.bind(this) }));
             default:
                 return (React.createElement("b", null,
                     "Unknown arg type ",
@@ -4045,8 +4045,7 @@ class ArgEditor extends React.Component {
         let suggested = [];
         for (const v in stack.variables) {
             if (!stack.variables[v].String &&
-                stack.variables[v].Object ==
-                    expected.Object) {
+                stack.variables[v].Object == expected.Object) {
                 suggested.push(v);
             }
         }
@@ -4105,6 +4104,7 @@ exports.getTypeName = getTypeName;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const React = __webpack_require__(/*! react */ "react");
+const instruction_base_1 = __webpack_require__(/*! ./instruction_base */ "./src/components/endpoint/instruction_base.tsx");
 const arg_editor_1 = __webpack_require__(/*! ./arg_editor */ "./src/components/endpoint/arg_editor.tsx");
 class CallMethod extends React.Component {
     static description() {
@@ -4113,10 +4113,11 @@ class CallMethod extends React.Component {
     static create() {
         return {
             CallMethod: {
+                id: instruction_base_1.guid(),
                 config: "",
                 method: "",
                 out_variable_name: "",
-                arguments: [],
+                arguments: []
             }
         };
     }
@@ -4137,9 +4138,12 @@ class CallMethod extends React.Component {
                     let suggested = arg_editor_1.ArgEditor.getSuggested(input.type, this.props.stack);
                     instruction.arguments.push({
                         name: input.name,
-                        arg_type: input.type.Object ? "Parameter" :
-                            input.type.String ? "String" : "",
-                        arg_type_value: suggested.length ? suggested[0] : "",
+                        arg_type: input.type.Object
+                            ? "Parameter"
+                            : input.type.String
+                                ? "String"
+                                : "",
+                        arg_type_value: suggested.length ? suggested[0] : ""
                     });
                 }
             }
@@ -4209,7 +4213,7 @@ class CallMethod extends React.Component {
                 " (",
                 arg_editor_1.getTypeName(method.output[0].type),
                 ") as:",
-                ' ',
+                " ",
                 React.createElement("input", { type: "text", value: this.props.instruction.out_variable_name, onChange: this.setOutVariableName.bind(this) })));
         }
         return (React.createElement("li", null,
@@ -4252,6 +4256,26 @@ class Stack {
     }
 }
 exports.Stack = Stack;
+function guid() {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
+    return (s4() +
+        s4() +
+        "-" +
+        s4() +
+        "-" +
+        s4() +
+        "-" +
+        s4() +
+        "-" +
+        s4() +
+        s4() +
+        s4());
+}
+exports.guid = guid;
 
 
 /***/ }),
@@ -4267,6 +4291,7 @@ exports.Stack = Stack;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const React = __webpack_require__(/*! react */ "react");
+const instruction_base_1 = __webpack_require__(/*! ./instruction_base */ "./src/components/endpoint/instruction_base.tsx");
 const arg_editor_1 = __webpack_require__(/*! ./arg_editor */ "./src/components/endpoint/arg_editor.tsx");
 class JsonReturn extends React.Component {
     static description() {
@@ -4274,11 +4299,11 @@ class JsonReturn extends React.Component {
     }
     static create() {
         return {
-            JsonReturn: arg_editor_1.ArgEditor.new_arg(),
+            JsonReturn: Object.assign({ id: instruction_base_1.guid() }, arg_editor_1.ArgEditor.new_arg())
         };
     }
     propChanged(prop) {
-        this.props.onChange(prop);
+        this.props.onChange(Object.assign({ id: this.props.instruction.id }, prop));
     }
     render() {
         return (React.createElement("li", null,
@@ -4322,16 +4347,20 @@ class Overview extends React.Component {
         super(props, context);
         this.state = {
             endpoint: cloneDeep(props.endpoint),
-            hasChanges: false
+            hasChanges: false,
+            changeIndex: props.changeIndex,
+            output: null
         };
         this.drag_from = React.createRef();
         this.drag_to = React.createRef();
         this.dragger = null;
     }
     static getDerivedStateFromProps(props, oldState) {
-        if (props.endpoint.id != oldState.endpoint.id) {
+        if (props.changeIndex != oldState.changeIndex) {
             return {
-                endpoint: cloneDeep(props.endpoint)
+                endpoint: cloneDeep(props.endpoint),
+                changeIndex: props.changeIndex,
+                hasChanges: false,
             };
         }
         else {
@@ -4343,7 +4372,7 @@ class Overview extends React.Component {
         ev.stopPropagation();
         let endpoint = Object.assign({}, this.state.endpoint);
         endpoint.instructions.splice(index, 1);
-        this.setState({ endpoint, hasChanges: false });
+        this.setState({ endpoint, hasChanges: true });
         return false;
     }
     changeInstruction(index, key, instruction) {
@@ -4363,15 +4392,16 @@ class Overview extends React.Component {
                     let instruction = endpoint.instructions[i];
                     if (instruction.CallMethod) {
                         for (const input of instruction.CallMethod.arguments) {
-                            if (input.arg_type == "Parameter" && input.arg_type_value == old_output_name) {
+                            if (input.arg_type == "Parameter" &&
+                                input.arg_type_value == old_output_name) {
                                 input.arg_type_value = new_name;
                             }
                         }
-                        if (instruction.CallMethod.out_variable_name == old_output_name) {
+                        if (instruction.CallMethod.out_variable_name ==
+                            old_output_name) {
                             break;
                         }
                     }
-                    console.log(instruction);
                 }
             }
             return {
@@ -4394,20 +4424,37 @@ class Overview extends React.Component {
         this.dragger = new Dragger(this.drag_from.current, this.drag_to.current, this.componentInserted.bind(this));
     }
     save() {
-        console.log(this.state.endpoint);
+        this.props.endpointChanged(this.state.endpoint);
+    }
+    clearOutput() {
+        this.setState({
+            output: null
+        });
+    }
+    generate() {
+        fetch("/api/generate/" + this.state.endpoint.id)
+            .then(o => o.text())
+            .then(t => {
+            this.setState({
+                output: t
+            });
+        });
     }
     render() {
         let stack = new instruction_base_1.Stack();
-        let button_class = "btn float-right";
-        if (this.state.hasChanges)
-            button_class += " btn-primary";
-        else
-            button_class += " btn-default";
+        if (this.state.output !== null) {
+            return (React.createElement(React.Fragment, null,
+                React.createElement("button", { className: "btn float-right btn-primary", onClick: this.clearOutput.bind(this) }, "\u00D7"),
+                React.createElement("pre", null,
+                    React.createElement("code", null, this.state.output))));
+        }
         return (React.createElement("div", { className: "row" },
             React.createElement("div", { className: "col-md-8" },
                 React.createElement("div", { className: "row" },
                     React.createElement("div", { className: "col-md-12" },
-                        React.createElement("button", { className: button_class, onClick: this.save.bind(this) }, "Save"))),
+                        React.createElement("button", { className: "btn float-right btn-primary", onClick: (this.state.hasChanges
+                                ? this.save
+                                : this.generate).bind(this) }, this.state.hasChanges ? "Save" : "Generate"))),
                 React.createElement("ul", { ref: this.drag_to }, this.state.endpoint.instructions.map((i, index) => {
                     let key = Object.getOwnPropertyNames(i)[0];
                     const Renderer = instruction_renderers[key];
@@ -4552,7 +4599,8 @@ class Root extends React.Component {
         this.state = {
             endpoints: [],
             configs: [],
-            active: null
+            active: null,
+            activeIndex: 0,
         };
         fetch("/api/endpoints")
             .then(r => r.json())
@@ -4563,7 +4611,8 @@ class Root extends React.Component {
             this.setState({
                 endpoints: r.endpoints,
                 configs: r.configs,
-                active
+                active,
+                activeIndex: 1,
             });
         });
     }
@@ -4575,16 +4624,43 @@ class Root extends React.Component {
         return (React.createElement("li", { className: "nav-item", key: endpoint.id },
             React.createElement("a", { href: "/#" + endpoint.name, className: className, onClick: this.selectEndpoint.bind(this, endpoint) }, endpoint.name)));
     }
+    endpointChanged(endpoint) {
+        let index = this.state.endpoints.findIndex(e => e.id == endpoint.id);
+        let endpoints = Object.assign([], this.state.endpoints);
+        endpoints[index] = endpoint;
+        this.setState({
+            endpoints
+        });
+        fetch("/api/endpoints", {
+            body: JSON.stringify(endpoint),
+            headers: {
+                "content-type": "application/json"
+            },
+            method: "POST"
+        })
+            .then(r => r.json())
+            .then(r => {
+            let index = this.state.endpoints.findIndex(e => e.id == r.id);
+            let endpoints = Object.assign([], this.state.endpoints);
+            endpoints[index] = r;
+            this.setState({
+                endpoints,
+                active: r,
+                activeIndex: this.state.activeIndex + 1,
+            });
+        });
+    }
     selectEndpoint(endpoint, e) {
         this.setState({
-            active: endpoint
+            active: endpoint,
+            activeIndex: this.state.activeIndex + 1,
         });
         e.currentTarget.blur();
     }
     render() {
         return (React.createElement("div", null,
             React.createElement("ul", { className: "nav nav-tabs" }, this.state.endpoints.map(this.renderEndpoint.bind(this))),
-            this.state.active ? (React.createElement(overview_1.Overview, { endpoint: this.state.active, configs: this.state.configs })) : null));
+            this.state.active ? (React.createElement(overview_1.Overview, { endpoint: this.state.active, configs: this.state.configs, changeIndex: this.state.activeIndex, endpointChanged: this.endpointChanged.bind(this) })) : null));
     }
 }
 exports.Root = Root;

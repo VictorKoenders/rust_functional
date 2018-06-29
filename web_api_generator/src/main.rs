@@ -9,21 +9,22 @@ use rust_functional::{Config, Instruction as BaseInstruction, InstructionParamet
 use std::fs::{create_dir_all, File};
 use std::io::Write;
 use std::process::Command;
+use std::rc::Rc;
 
 fn main() {
-    let postgres = Config::from_path("modules/postgres");
+    let postgres = Rc::new(Config::from_path("modules/postgres"));
     let mut builder = Builder::default();
-    builder.add_module(&postgres);
+    builder.add_module(postgres.clone());
     builder.add_endpoint({
         let mut endpoint = EndPoint::new("user_list", "/api/users/list");
         endpoint.add_base_instruction(BaseInstruction::CallModule {
-            config: &postgres,
+            config: postgres.clone(),
             method: "get_connection".to_string(),
             out_variable_name: "connection".to_string(),
             parameters: vec![],
         });
         endpoint.add_base_instruction(BaseInstruction::CallModule {
-            config: &postgres,
+            config: postgres.clone(),
             method: "execute_query".to_string(),
             out_variable_name: "result".to_string(),
             parameters: vec![
