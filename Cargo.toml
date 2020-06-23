@@ -6,7 +6,6 @@ members = [
     "base",
     "web_api_generator",
     "web_api_frontend",
-    "output",
     "libs/cookie-rs",
     "module_def_generator",
 ]
